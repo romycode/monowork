@@ -11,9 +11,9 @@ default:
 # Bootstrap: build production image then start all services
 setup: build start
 
-# Build the production API Docker image (local tag only)
+# Build the development image used by compose
 build:
-    docker build -t {{image}} --target production -f api/Dockerfile .
+    docker compose build
 
 # Build and tag the production image with the current git SHA (for releases)
 build-prod:
