@@ -38,7 +38,7 @@ logs:
 
 # Open a shell inside the api service as the node user
 shell:
-    docker compose exec --user node api sh
+    docker compose run --rm -it --user node api bash
 
 # ── Dependencies ──────────────────────────────────────────────────────────────
 

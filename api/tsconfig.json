@@ -16,7 +16,7 @@
     "moduleResolution": "NodeNext",
 
     // Emit
-    "target": "ES2025",
+    "target": "ESNext",
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
@@ -27,11 +27,12 @@
     // Interop
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": false,
     "skipLibCheck": true,
 
     // Types default is now [] in TS6, so node must be explicit
-    "types": ["node"]
+    "types": ["node"],
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
 }
