@@ -3,7 +3,10 @@ services:
   api:
     image: node:26-slim
     working_dir: /app
-    command: sh -c "corepack enable && pnpm install && pnpm --filter @monowork/api dev"
+    command:
+      - sh
+      - -c
+      - npm install -g "$(node -p 'require("./package.json").packageManager')" && pnpm install && pnpm --filter @monowork/api dev
     ports:
       # Bind to localhost only — avoids exposing the dev port on all interfaces
       - "3000:3000"
@@ -34,7 +37,10 @@ services:
   app:
     image: node:26-slim
     working_dir: /app
-    command: sh -c "corepack enable && pnpm install && pnpm --filter @monowork/app dev"
+    command:
+      - sh
+      - -c
+      - npm install -g "$(node -p 'require("./package.json").packageManager')" && pnpm install && pnpm --filter @monowork/app dev
     ports:
       - "5173:5173"
     volumes:

@@ -5,7 +5,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 COPY --link package.json ./
-RUN corepack enable && corepack install
+RUN npm install -g "$(node -p 'require("./package.json").packageManager')"
 
 FROM base AS deps
 WORKDIR /app
