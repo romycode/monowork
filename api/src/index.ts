@@ -1,12 +1,6 @@
-import { createServer } from 'node:http'
+import { createApp } from './app.js'
+import { env } from './env.js'
 
-const PORT = Number(process.env['PORT'] ?? 3000)
+const app = createApp()
 
-const server = createServer((_req, res) => {
-  res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify({ status: 'ok' }))
-})
-
-server.listen(PORT, () => {
-  console.log(`API listening on port ${PORT}`)
-})
+await app.listen({ port: env.PORT, host: '0.0.0.0' })
