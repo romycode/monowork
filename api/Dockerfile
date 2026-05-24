@@ -5,29 +5,29 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 COPY --link package.json ./
-RUN npm install -g "$(node -p 'require("./package.json").packageManager')"
+# pnpm global install writes to /usr/local — must run as root
+RUN npm install -g "$(node -p 'require("./package.json").packageManager')" && \
+    chown node:node /app
+USER node
 
 FROM base AS deps
-WORKDIR /app
-COPY --link package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY --link api/package.json ./api/
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+COPY --link --chown=node:node package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY --link --chown=node:node api/package.json ./api/
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store,uid=1000 \
     pnpm install --frozen-lockfile --filter @monowork/api --store-dir /pnpm/store
 
 FROM base AS build
-WORKDIR /app
 COPY --link --from=deps /app/node_modules ./node_modules
 COPY --link --from=deps /app/api/node_modules ./api/node_modules
-COPY --link package.json pnpm-workspace.yaml ./
-COPY --link api ./api
+COPY --link --chown=node:node package.json pnpm-workspace.yaml ./
+COPY --link --chown=node:node api ./api
 RUN pnpm --filter @monowork/api build
 
 FROM node:26-slim AS runner
 WORKDIR /app
 COPY --link --from=build /app/api/dist ./dist
-COPY --link api/package.json ./
+COPY --link --from=build /app/api/package.json ./
 ENV NODE_ENV=production
-# node user (uid 1000) ships with the official node image
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
