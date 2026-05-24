@@ -9,7 +9,7 @@ default:
 # ── Services ──────────────────────────────────────────────────────────────────
 
 # Bootstrap: build production image then start all services
-setup: build start
+setup: build install start
 
 # Build the development image used by compose
 build:
@@ -44,8 +44,8 @@ shell:
 
 # Reinstall dependencies in all service containers (run after adding a package)
 install:
-    docker compose exec --user node api pnpm install
-    docker compose exec --user node app pnpm install
+    docker compose run --rm -it --user node api pnpm install
+    docker compose run --rm -it --user node app pnpm install
 
 # ── Code quality ──────────────────────────────────────────────────────────────
 

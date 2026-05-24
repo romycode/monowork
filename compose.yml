@@ -7,19 +7,11 @@ services:
       target: development
     init: true
     working_dir: /app
-    command:
-      - sh
-      - -c
-      - |
-        chown node:node /app/node_modules /app/api/node_modules
-        exec su -s /bin/sh -c "pnpm install && exec pnpm --filter @monowork/api dev" node
+    command: pnpm --filter @monowork/api dev
     ports:
       - "3000:3000"
     volumes:
       - .:/app
-      # Named volumes prevent host node_modules from shadowing container installs
-      - api_root_modules:/app/node_modules
-      - api_pkg_modules:/app/api/node_modules
     environment:
       NODE_ENV: development
       PORT: "3000"
@@ -43,13 +35,7 @@ services:
     image: node:26-slim
     init: true
     working_dir: /app
-    command:
-      - sh
-      - -c
-      - |
-        npm install -g "$(node -p 'require("./package.json").packageManager')"
-        chown node:node /app/node_modules /app/app/node_modules
-        exec su -s /bin/sh -c "pnpm install && exec pnpm --filter @monowork/app dev" node
+    command: pnpm --filter @monowork/app dev
     ports:
       - "5173:5173"
     volumes:
