@@ -4,4 +4,4 @@
 **/dist
 **/*.tsbuildinfo
 .node-version
-docker-compose.yml
+compose.yml

@@ -1,14 +1,16 @@
 # Docker Compose v2 — no version field required (obsolete since Compose v2.27+)
 services:
   api:
-    image: node:26-slim
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+      target: development
     init: true
     working_dir: /app
     command:
       - sh
       - -c
       - |
-        npm install -g "$(node -p 'require("./package.json").packageManager')"
         chown node:node /app/node_modules /app/api/node_modules
         exec su -s /bin/sh -c "pnpm install && exec pnpm --filter @monowork/api dev" node
     ports:

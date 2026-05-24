@@ -13,11 +13,11 @@ setup: build start
 
 # Build the production API Docker image (local tag only)
 build:
-    docker build -t {{image}} -f api/Dockerfile .
+    docker build -t {{image}} --target production -f api/Dockerfile .
 
 # Build and tag the production image with the current git SHA (for releases)
 build-prod:
-    docker build -t {{image}}:latest -t {{image}}:$(git rev-parse --short HEAD) -f api/Dockerfile .
+    docker build -t {{image}}:latest -t {{image}}:$(git rev-parse --short HEAD) --target production -f api/Dockerfile .
 
 # Start all services in the background
 start:

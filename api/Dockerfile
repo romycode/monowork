@@ -1,29 +1,44 @@
 # syntax=docker/dockerfile:1
 
+# ── Base ──────────────────────────────────────────────────────────────────────
+# Installs pnpm as root (writes to /usr/local). Individual stages set USER.
 FROM node:26-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 COPY --link package.json ./
-# pnpm global install writes to /usr/local — must run as root
 RUN npm install -g "$(node -p 'require("./package.json").packageManager')" && \
-    chown node:node /app
+    mkdir -p /pnpm && \
+    chown node:node /app /pnpm
+
+# ── Development ───────────────────────────────────────────────────────────────
+# Target used by compose. Source and node_modules are volume-mounted at runtime;
+# compose startup handles the privilege drop to the node user.
+FROM base AS development
+EXPOSE 3000
+
+# ── Fetch ─────────────────────────────────────────────────────────────────────
+# pnpm fetch only needs the lockfile — cached until dependencies change.
+FROM base AS fetch
 USER node
+COPY --link --chown=node:node pnpm-lock.yaml ./
+RUN pnpm fetch
 
-FROM base AS deps
-COPY --link --chown=node:node package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY --link --chown=node:node api/package.json ./api/
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store,uid=1000 \
-    pnpm install --frozen-lockfile --filter @monowork/api --store-dir /pnpm/store
-
-FROM base AS build
-COPY --link --from=deps /app/node_modules ./node_modules
-COPY --link --from=deps /app/api/node_modules ./api/node_modules
+# ── Deps ──────────────────────────────────────────────────────────────────────
+# Installs node_modules offline from the virtual store built in fetch.
+FROM fetch AS deps
 COPY --link --chown=node:node package.json pnpm-workspace.yaml ./
+COPY --link --chown=node:node api/package.json ./api/
+RUN pnpm install --offline --frozen-lockfile --filter @monowork/api
+
+# ── Build ─────────────────────────────────────────────────────────────────────
+FROM deps AS build
 COPY --link --chown=node:node api ./api
 RUN pnpm --filter @monowork/api build
 
-FROM node:26-slim AS runner
+# ── Production ────────────────────────────────────────────────────────────────
+# Minimal runtime image — only the compiled output and production manifest.
+FROM node:26-slim AS production
 WORKDIR /app
 COPY --link --from=build /app/api/dist ./dist
 COPY --link --from=build /app/api/package.json ./
