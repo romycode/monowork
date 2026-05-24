@@ -1,0 +1,14 @@
+services:
+  api:
+    image: node:26-slim
+    working_dir: /app
+    command: sh -c "corepack enable && pnpm install && pnpm --filter @monowork/api dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/api/node_modules
+    environment:
+      NODE_ENV: development
+      PORT: 3000

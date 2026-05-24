@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    // Type checking — strict is now TS6 default, extras catch subtle bugs
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    // Module — NodeNext is required for Node.js ESM; "node" resolution is deprecated in TS6
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    // Emit
+    "target": "ES2025",
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "incremental": true,
+
+    // Interop
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    // Types default is now [] in TS6, so node must be explicit
+    "types": ["node"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
