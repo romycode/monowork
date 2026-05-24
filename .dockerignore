@@ -1,0 +1,7 @@
+.git
+.gitignore
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.node-version
+docker-compose.yml
