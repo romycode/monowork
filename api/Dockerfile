@@ -3,7 +3,9 @@
 FROM node:26-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+WORKDIR /app
+COPY --link package.json ./
+RUN corepack enable && corepack install
 
 FROM base AS deps
 WORKDIR /app
