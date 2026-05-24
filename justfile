@@ -11,9 +11,13 @@ default:
 # Bootstrap: build production image then start all services
 setup: build start
 
-# Build the production API Docker image
+# Build the production API Docker image (local tag only)
 build:
     docker build -t {{image}} -f api/Dockerfile .
+
+# Build and tag the production image with the current git SHA (for releases)
+build-prod:
+    docker build -t {{image}}:latest -t {{image}}:$(git rev-parse --short HEAD) -f api/Dockerfile .
 
 # Start all services in the background
 start:
