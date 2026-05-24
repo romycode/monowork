@@ -2,13 +2,16 @@
 services:
   api:
     image: node:26-slim
+    init: true
     working_dir: /app
     command:
       - sh
       - -c
-      - npm install -g "$(node -p 'require("./package.json").packageManager')" && pnpm install && pnpm --filter @monowork/api dev
+      - |
+        npm install -g "$(node -p 'require("./package.json").packageManager')"
+        chown node:node /app/node_modules /app/api/node_modules
+        exec su -s /bin/sh -c "pnpm install && exec pnpm --filter @monowork/api dev" node
     ports:
-      # Bind to localhost only — avoids exposing the dev port on all interfaces
       - "3000:3000"
     volumes:
       - .:/app
@@ -36,11 +39,15 @@ services:
 
   app:
     image: node:26-slim
+    init: true
     working_dir: /app
     command:
       - sh
       - -c
-      - npm install -g "$(node -p 'require("./package.json").packageManager')" && pnpm install && pnpm --filter @monowork/app dev
+      - |
+        npm install -g "$(node -p 'require("./package.json").packageManager')"
+        chown node:node /app/node_modules /app/app/node_modules
+        exec su -s /bin/sh -c "pnpm install && exec pnpm --filter @monowork/app dev" node
     ports:
       - "5173:5173"
     volumes:
