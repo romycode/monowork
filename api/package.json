@@ -7,10 +7,16 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint src --fix",
+    "format": "oxfmt src",
+    "format:check": "oxfmt --check src"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "oxfmt": "catalog:",
+    "oxlint": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
   },

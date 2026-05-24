@@ -1,6 +1,12 @@
 {
   "name": "monowork",
   "private": true,
+  "scripts": {
+    "lint": "pnpm -r run lint",
+    "lint:fix": "pnpm -r run lint:fix",
+    "format": "pnpm -r run format",
+    "format:check": "pnpm -r run format:check"
+  },
   "engines": {
     "node": ">=26.0.0",
     "pnpm": ">=11.0.0"

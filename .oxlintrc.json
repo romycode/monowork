@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript"],
+  "env": {
+    "node": true,
+    "es2025": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "no-console": "warn",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-unused-vars": "off"
+  }
+}
