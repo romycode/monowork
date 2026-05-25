@@ -1,3 +1,5 @@
+import {db} from '#/db/index'
+import {createUsersRepository} from '#/db/users-repository'
 import {env} from '#/env'
 import {healthRoutes} from '#/routes/health'
 import {usersRoutes} from '#/routes/users'
@@ -9,29 +11,34 @@ import Fastify from 'fastify'
 
 export function createApp() {
   const app = Fastify({
-    logger: {
-      mixin() {
-        const span = trace.getActiveSpan()
-        if (!span) return {}
-        const ctx = span.spanContext()
-        return { trace_id: ctx.traceId, span_id: ctx.spanId }
-      },
-      transport: {
-        targets: [
-          { target: 'pino/file', level: 'info', options: { destination: 1 } },
-          {
-            target: 'pino-loki',
-            level: 'info',
-            options: {
-              host: env.LOKI_ENDPOINT,
-              labels: { service_name: env.OTEL_SERVICE_NAME },
-              batching: true,
-              interval: 5,
+    logger:
+      env.NODE_ENV === 'test'
+        ? false
+        : {
+            mixin() {
+              const span = trace.getActiveSpan()
+              if (!span) return {}
+              const ctx = span.spanContext()
+              return { trace_id: ctx.traceId, span_id: ctx.spanId }
+            },
+            transport: {
+              targets: [
+                { target: 'pino/file', level: 'info', options: { destination: 1 } },
+                {
+                  target: 'pino-loki',
+                  level: 'info',
+                  options: {
+                    host: env.LOKI_ENDPOINT,
+                    labels: {
+                      service_name: env.OTEL_SERVICE_NAME,
+                    },
+                    batching: true,
+                    interval: 5,
+                  },
+                },
+              ],
             },
           },
-        ],
-      },
-    },
   }).withTypeProvider<ZodTypeProvider>()
 
   void app.register(new FastifyOtelInstrumentation().plugin())
@@ -63,7 +70,7 @@ export function createApp() {
   })
 
   void app.register(healthRoutes)
-  void app.register(usersRoutes)
+  void app.register(usersRoutes, { repo: createUsersRepository(db) })
 
   return app
 }

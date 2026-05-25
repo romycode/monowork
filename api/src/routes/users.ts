@@ -1,26 +1,24 @@
-import {db} from '#/db/index'
-import {users} from '#/db/schema'
+import type {UsersRepository} from '#/db/users-repository'
 import type {FastifyPluginAsyncZod} from '@fastify/type-provider-zod'
-import {eq} from 'drizzle-orm'
 import {z} from 'zod'
 
 const userSchema = z.object({
-  id: z.number(),
+  id: z.string().uuid(),
   email: z.string().email(),
   name: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
 })
 
-const notFoundSchema = z.object({message: z.string()})
+const notFoundSchema = z.object({ message: z.string() })
 
-const idParam = z.object({id: z.coerce.number().int().positive()})
+const idParam = z.object({ id: z.uuid({ version: "v4" }) })
 
-export const usersRoutes: FastifyPluginAsyncZod = async (fastify) => {
-  fastify.get(
-    '/users',
-    {schema: {response: {200: z.array(userSchema)}}},
-    async () => db.select().from(users),
+type Options = { repo: UsersRepository }
+
+export const usersRoutes: FastifyPluginAsyncZod<Options> = async (fastify, { repo }) => {
+  fastify.get('/users', { schema: { response: { 200: z.array(userSchema) } } }, async () =>
+    repo.findAll(),
   )
 
   fastify.post(
@@ -30,23 +28,23 @@ export const usersRoutes: FastifyPluginAsyncZod = async (fastify) => {
         body: z.object({
           email: z.string().email(),
           name: z.string().min(1),
+          password: z.string().min(8),
         }),
-        response: {201: userSchema},
+        response: { 201: userSchema },
       },
     },
     async (req, reply) => {
-      const [user] = await db.insert(users).values(req.body).returning()
-      if (!user) throw new Error('Insert failed unexpectedly')
+      const user = await repo.create(req.body)
       return reply.code(201).send(user)
     },
   )
 
   fastify.get(
     '/users/:id',
-    {schema: {params: idParam, response: {200: userSchema, 404: notFoundSchema}}},
+    { schema: { params: idParam, response: { 200: userSchema, 404: notFoundSchema } } },
     async (req, reply) => {
-      const [user] = await db.select().from(users).where(eq(users.id, req.params.id))
-      if (!user) return reply.code(404).send({message: 'User not found'})
+      const user = await repo.findById(req.params.id)
+      if (!user) return reply.code(404).send({ message: 'User not found' })
       return user
     },
   )
@@ -58,32 +56,33 @@ export const usersRoutes: FastifyPluginAsyncZod = async (fastify) => {
         params: idParam,
         body: z
           .object({
-            email: z.string().email().optional(),
-            name: z.string().min(1).optional(),
+            email: z.string().email(),
+            name: z.string().min(1),
+            password: z.string().min(8),
           })
-          .refine((b) => b.email !== undefined || b.name !== undefined, {
-            message: 'At least one field must be provided',
-          }),
-        response: {200: userSchema, 404: notFoundSchema},
+          .partial()
+          .refine(
+            (b) => b.email !== undefined || b.name !== undefined || b.password !== undefined,
+            {
+              message: 'At least one field must be provided',
+            },
+          ),
+        response: { 200: userSchema, 404: notFoundSchema },
       },
     },
     async (req, reply) => {
-      const [user] = await db
-        .update(users)
-        .set({...req.body, updatedAt: new Date()})
-        .where(eq(users.id, req.params.id))
-        .returning()
-      if (!user) return reply.code(404).send({message: 'User not found'})
+      const user = await repo.update(req.params.id, req.body)
+      if (!user) return reply.code(404).send({ message: 'User not found' })
       return user
     },
   )
 
   fastify.delete(
     '/users/:id',
-    {schema: {params: idParam, response: {204: z.void(), 404: notFoundSchema}}},
+    { schema: { params: idParam, response: { 204: z.void(), 404: notFoundSchema } } },
     async (req, reply) => {
-      const [user] = await db.delete(users).where(eq(users.id, req.params.id)).returning()
-      if (!user) return reply.code(404).send({message: 'User not found'})
+      const user = await repo.remove(req.params.id)
+      if (!user) return reply.code(404).send({ message: 'User not found' })
       return reply.code(204).send()
     },
   )

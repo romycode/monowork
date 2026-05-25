@@ -21,6 +21,7 @@ just lint-fix       # lint and autofix api + app
 just format         # format api + app
 just format-check   # check formatting without writing
 just typecheck      # TypeScript check (api only)
+just test           # run api integration tests (requires services running)
 
 just db-push        # push schema to db (development, no migration files)
 just db-generate    # generate migration files from schema changes

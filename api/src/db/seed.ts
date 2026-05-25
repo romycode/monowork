@@ -5,6 +5,7 @@ async function seedDB(): Promise<void> {
   const user: typeof users.$inferInsert = {
     name: 'John',
     email: 'john@example.com',
+    password: 'password123',
   }
   await db.insert(users).values(user).onConflictDoNothing()
   // eslint-disable-next-line no-console

@@ -73,6 +73,10 @@ format-check:
 typecheck:
     docker compose exec --user node api pnpm --filter @monowork/api typecheck
 
+# Run api tests (requires services to be running)
+test:
+    docker compose exec --user node api pnpm --filter @monowork/api test
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 # Push schema to the running database (no migration files)

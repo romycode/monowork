@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="OxcSettings">
-    <option name="configurationMode" value="DISABLED" />
     <option name="runTrigger" value="ON_SAVE" />
     <option name="typeAware" value="true" />
   </component>

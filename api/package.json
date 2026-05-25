@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx --watch --import ./src/otel.ts src/index.ts",
+    "dev": "tsx --watch ./src --import ./src/otel.ts src/index.ts",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "start": "node --import ./dist/src/otel.js ./dist/src/index.ts",
     "typecheck": "tsc --noEmit",
@@ -12,6 +12,7 @@
     "lint:fix": "oxlint src --fix",
     "format": "oxfmt src",
     "format:check": "oxfmt --check src",
+    "test": "NODE_ENV=test tsx --test \"**/*.test.ts\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
