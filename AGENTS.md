@@ -13,7 +13,7 @@ just setup   # first time: build image, install deps, start services
 just start   # subsequent starts
 ```
 
-Services must be running before using `exec`-based commands (`just test`, `just typecheck`, etc.).
+Services must be running for `just test`, `just test-unit`, `just test-acceptance`, and `just typecheck`. All other commands (`just lint`, `just format`, etc.) spin up a temporary container and work without running services.
 
 ## Commands
 
@@ -28,7 +28,9 @@ just lint-fix       # lint and autofix api + app
 just format         # format api + app
 just format-check   # check formatting without writing
 just typecheck      # TypeScript check (api only)
-just test           # run api integration tests
+just test           # run all api tests
+just test-unit      # run unit tests only (service layer)
+just test-acceptance # run acceptance tests only (HTTP layer)
 
 just db-push        # push schema to db (dev only, no migration files)
 just db-generate    # generate migration files from schema changes
@@ -36,6 +38,7 @@ just db-migrate     # run pending migrations
 just db-studio      # open Drizzle Studio
 
 just install        # re-run pnpm install after changing package.json
+just hooks          # configure git hooks (run once per clone, included in just setup)
 ```
 
 ## Ports
@@ -72,7 +75,8 @@ src/
     ├── <feature>-repository.ts  # DB adapter (outbound port)
     ├── <feature>-service.ts     # business logic (inbound port)
     ├── <feature>-router.ts      # HTTP adapter — thin, delegates to service
-    └── <feature>.test.ts        # route tests, mocks the service
+    ├── <feature>-service.test.ts # unit tests — mocks repository, tests service logic
+    └── <feature>-router.test.ts  # acceptance tests — mocks repository, tests HTTP contract
 ```
 
 Layer rules:

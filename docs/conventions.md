@@ -53,7 +53,8 @@ api/
 │       ├── <feature>-repository.ts  # DB adapter (outbound port)
 │       ├── <feature>-service.ts     # Business logic (inbound port)
 │       ├── <feature>-router.ts      # HTTP adapter — thin, delegates to service
-│       └── <feature>.test.ts        # Route tests, mocks the service
+│       ├── <feature>-service.test.ts # Unit tests — mocks repository, tests service logic
+│       └── <feature>-router.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
 ├── drizzle.config.ts
 ├── tsconfig.json
 ├── tsconfig.build.json       # Excludes tests/seed from production build
@@ -386,7 +387,7 @@ function mockRepo(overrides: Partial<UsersRepository> = {}): UsersRepository {
 
 **Always close the app** in `t.after()` to prevent resource leaks.
 
-Run tests with `just test` (requires services to be running).
+Run tests with `just test` (all), `just test-unit`, or `just test-acceptance`. All three require services to be running.
 
 ### App (`app/`)
 
