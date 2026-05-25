@@ -15,7 +15,7 @@ export type UsersService = {
   remove: (id: string) => Promise<User | undefined>
 }
 
-export function createUsersService(repo: UsersRepository): UsersService {
+export function userService(repo: UsersRepository): UsersService {
   return {
     list: () => repo.findAll(),
     get: (id) => repo.findById(id),

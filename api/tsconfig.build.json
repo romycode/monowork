@@ -3,6 +3,7 @@
   "exclude": [
     "**/*.test.ts",
     "**/*.spec.ts",
+    "**/*-test-helpers.ts",
     "src/db/seed.ts",
     "drizzle.config.ts"
   ]

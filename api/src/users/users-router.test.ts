@@ -1,36 +1,17 @@
-import type { User, UsersRepository } from '#/users/users-repository'
+import type { UsersRepository } from '#/users/users-repository'
 import { usersRouter } from '#/users/users-router'
-import { createUsersService } from '#/users/users-service'
+import { userService } from '#/users/users-service'
+import { buildUser, mockRepo } from '#/users/users-test-helpers'
 import type { ZodTypeProvider } from '@fastify/type-provider-zod'
 import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
 import Fastify from 'fastify'
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-const mockUser: User = {
-  id: crypto.randomUUID(),
-  email: 'alice@example.com',
-  name: 'Alice',
-  createdAt: new Date('2024-01-01T00:00:00.000Z'),
-  updatedAt: new Date('2024-01-01T00:00:00.000Z'),
-}
-
-function mockRepo(overrides: Partial<UsersRepository> = {}): UsersRepository {
-  const notImplemented = (): never => {
-    throw new Error('Not implemented')
-  }
-  return {
-    findAll: notImplemented,
-    findById: notImplemented,
-    upsert: notImplemented,
-    update: notImplemented,
-    remove: notImplemented,
-    ...overrides,
-  }
-}
+const mockUser = buildUser()
 
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
-  const service = createUsersService(mockRepo(repoOverrides))
+  const service = userService(mockRepo(repoOverrides))
   const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
@@ -126,7 +107,7 @@ describe('GET /users/:id', () => {
   it('returns 404 when user not found', async (t) => {
     const app = buildApp({ findById: async () => undefined })
     t.after(() => app.close())
-    const res = await app.inject({ method: 'GET', url: '/users/' + crypto.randomUUID() })
+    const res = await app.inject({ method: 'GET', url: '/users/' + mockUser.id })
     assert.equal(res.statusCode, 404)
     assert.equal(res.json<{ message: string }>().message, 'User not found')
   })
@@ -134,7 +115,7 @@ describe('GET /users/:id', () => {
 
 describe('PATCH /users/:id', () => {
   it('returns 200 with updated user', async (t) => {
-    const updated = { ...mockUser, name: 'Alicia' }
+    const updated = buildUser({ name: 'Alicia' })
     const app = buildApp({ update: async () => updated })
     t.after(() => app.close())
     const res = await app.inject({
@@ -151,7 +132,7 @@ describe('PATCH /users/:id', () => {
     t.after(() => app.close())
     const res = await app.inject({
       method: 'PATCH',
-      url: '/users/' + crypto.randomUUID(),
+      url: '/users/' + mockUser.id,
       payload: { name: 'Nobody' },
     })
     assert.equal(res.statusCode, 404)
@@ -162,7 +143,7 @@ describe('PATCH /users/:id', () => {
     t.after(() => app.close())
     const res = await app.inject({
       method: 'PATCH',
-      url: '/users/' + crypto.randomUUID(),
+      url: '/users/' + mockUser.id,
       payload: {},
     })
     assert.equal(res.statusCode, 400)
@@ -180,7 +161,7 @@ describe('DELETE /users/:id', () => {
   it('returns 404 when user not found', async (t) => {
     const app = buildApp({ remove: async () => undefined })
     t.after(() => app.close())
-    const res = await app.inject({ method: 'DELETE', url: '/users/' + crypto.randomUUID() })
+    const res = await app.inject({ method: 'DELETE', url: '/users/' + mockUser.id })
     assert.equal(res.statusCode, 404)
   })
 })

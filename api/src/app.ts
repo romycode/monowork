@@ -3,7 +3,7 @@ import { env } from '#/env'
 import { healthRouter } from '#/health/health-router'
 import { createUsersRepository } from '#/users/users-repository'
 import { usersRouter } from '#/users/users-router'
-import { createUsersService } from '#/users/users-service'
+import { userService } from '#/users/users-service'
 import { FastifyOtelInstrumentation } from '@fastify/otel'
 import type { ZodTypeProvider } from '@fastify/type-provider-zod'
 import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
@@ -71,7 +71,7 @@ export function createApp() {
   })
 
   void app.register(healthRouter)
-  void app.register(usersRouter, { service: createUsersService(createUsersRepository(db)) })
+  void app.register(usersRouter, { service: userService(createUsersRepository(db)) })
 
   return app
 }
