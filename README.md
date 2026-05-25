@@ -18,14 +18,15 @@ just start   # subsequent starts
 
 ## Stack
 
-| Layer | Tech |
-|---|---|
-| Runtime | Node.js 26 · pnpm 11 workspaces |
-| API | Fastify 5 · Zod v4 · Drizzle ORM |
-| Database | PostgreSQL 17 |
-| Frontend | Vue 3 · Vite · Pinia · Vue Router |
-| Observability | OpenTelemetry · Grafana · Loki · Tempo |
-| Tooling | oxlint · oxfmt · just · Docker Compose |
+| Layer         | Tech                                      |
+|---------------|-------------------------------------------|
+| Runtime       | Node.js 26 · pnpm 11 workspaces           |
+| API           | Fastify 5 · Zod v4 · Drizzle ORM          |
+| Database      | PostgreSQL 17                             |
+| Frontend      | Vue 3 · Vite · Pinia · Vue Router         |
+| Observability | OpenTelemetry · Grafana · Loki · Tempo    |
+| Tooling       | oxlint · oxfmt · just · Docker Compose    |
+| API client    | Bruno (`bruno/`)                          |
 
 ## Further reading
 
