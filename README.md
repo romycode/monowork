@@ -1,9 +1,9 @@
 # monowork
 
-pnpm monorepo with a Fastify API and a Vue 3 frontend.
+pnpm monorepo with a Fastify API and a Vue 3 frontend, using NodeJS 26
 
 **Prerequisites: [just](https://github.com/casey/just#installation) and Docker.**  
-No Node.js or pnpm installation required on the host.
+No _Node.js_ or _pnpm_ installation is required on the host.
 
 ## Structure
 
@@ -38,7 +38,7 @@ just setup        # build dev image then start all services (first-time setup)
 just start        # start all services in the background
 just stop         # stop and remove containers
 just logs         # stream logs from all services  (ctrl-c to exit)
-just shell        # open a shell in the api container as the node user
+just cli        # open a shell in the api container as the node user
 
 # ── Images ────────────────────────────────────────────────────────────────────
 just build        # build the development image (used by compose)

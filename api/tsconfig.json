@@ -14,15 +14,14 @@
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
     // Emit
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "forceConsistentCasingInFileNames": true,
     "target": "ESNext",
     "outDir": "dist",
     "rootDir": "./",
     "paths": {
-      "#/*": [
-        "./src/*",
-        "./src/*.ts"
-      ]
+      "#/*": ["./src/*", "./src/*.ts"],
     },
     // Types default is [] in TS6, so node must be explicit
     "types": [

@@ -1,5 +1,6 @@
 import {env} from '#/env'
 import {healthRoutes} from '#/routes/health'
+import {usersRoutes} from '#/routes/users'
 import {FastifyOtelInstrumentation} from '@fastify/otel'
 import type {ZodTypeProvider} from '@fastify/type-provider-zod'
 import {serializerCompiler, validatorCompiler} from '@fastify/type-provider-zod'
@@ -62,6 +63,7 @@ export function createApp() {
   })
 
   void app.register(healthRoutes)
+  void app.register(usersRoutes)
 
   return app
 }

@@ -1,0 +1,21 @@
+meta {
+  name: Update User
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/users/{{userId}}
+  body: json
+  auth: none
+}
+
+params:path {
+  userId: 1
+}
+
+body:json {
+  {
+    "name": "Jane Doe"
+  }
+}

@@ -17,6 +17,13 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "imports": {
+    "#/*.json": "./dist/src/*.json",
+    "#/*": "./dist/src/*.js"
+  },
   "devDependencies": {
     "@tsconfig/node-ts": "^23.6.4",
     "@tsconfig/node24": "^24.0.4",
@@ -29,9 +36,6 @@
     "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
-  },
-  "engines": {
-    "node": ">=26.0.0"
   },
   "dependencies": {
     "@fastify/otel": "^0.17.1",
@@ -51,9 +55,5 @@
     "pg": "^8.21.0",
     "pino-loki": "^2.6.0",
     "zod": "^4.4.3"
-  },
-  "imports": {
-    "#/*.json": "./dist/src/*.json",
-    "#/*": "./dist/src/*.js"
   }
 }
