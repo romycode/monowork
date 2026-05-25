@@ -1,5 +1,5 @@
 import {db} from '#/db/index'
-import {users} from '#/db/schema'
+import {users} from '#/users/users-schema'
 
 async function seedDB(): Promise<void> {
   const user: typeof users.$inferInsert = {
