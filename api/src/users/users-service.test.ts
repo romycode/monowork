@@ -29,17 +29,13 @@ describe('UsersService.upsert', () => {
 
   it('returns the user with created=true on first call', async () => {
     const user = buildUser()
-    const service = userService(
-      mockRepo({ upsert: async () => ({ user, created: true }) }),
-    )
+    const service = userService(mockRepo({ upsert: async () => ({ user, created: true }) }))
     assert.deepEqual(await service.upsert(user.id, input), { user, created: true })
   })
 
   it('returns the existing user with created=false on replay', async () => {
     const user = buildUser()
-    const service = userService(
-      mockRepo({ upsert: async () => ({ user, created: false }) }),
-    )
+    const service = userService(mockRepo({ upsert: async () => ({ user, created: false }) }))
     assert.deepEqual(await service.upsert(user.id, input), { user, created: false })
   })
 })
