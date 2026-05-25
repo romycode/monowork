@@ -189,6 +189,21 @@ Each feature is a self-contained directory under `src/<feature>/`. The layers wi
 
 No layer may skip levels (e.g. a router must not call the repository directly).
 
+### HTTP method semantics
+
+| Method | Semantics | Idempotent |
+|---|---|---|
+| `GET` | Read resource(s) | Yes |
+| `PUT` | Create **or** fully replace a resource. Client provides the ID. | Yes |
+| `PATCH` | Partial update (at least one field required) | No |
+| `DELETE` | Remove a resource | Yes |
+
+**PUT is used for creates.** The client generates a UUID and sends `PUT /resource/:id` with a full body. The server creates the resource if the ID is new, or returns the existing resource if it already exists. Calling the same request multiple times always produces the same outcome — idempotency by HTTP method.
+
+**PATCH is used for partial updates.** At least one field must be provided; absent fields are left unchanged.
+
+POST is not used for resource creation in this API.
+
 ### Router
 
 Exports one named constant typed as `FastifyPluginAsyncZod`. Zod schemas live here (inline at module top). The router's only job is HTTP: parse the request, call the service, format the response.
@@ -308,14 +323,37 @@ The API uses Node's built-in test runner with no external test framework.
 | Test runner | `node:test` (`describe`, `it`) |
 | Assertions | `node:assert/strict` |
 | HTTP testing | `app.inject()` (no real server) |
-| Mocking | Manual factory functions |
+| Mocking | Manual factory functions (no mocking library) |
 
-**Co-locate tests**: place `<resource>.test.ts` next to `<resource>.ts` in the same directory.
+Each feature slice has two test files:
 
-**Build an isolated app per test file**: do not import the full `createApp()` from `app.ts`. Each test file builds a minimal Fastify instance with only the router under test:
+| File | Kind | Mocks | What it tests |
+|---|---|---|---|
+| `<feature>-service.test.ts` | Unit | `<Feature>Repository` | Business logic in isolation |
+| `<feature>-router.test.ts` | Acceptance | `<Feature>Repository` | Full HTTP contract: router + real service |
+
+**Both test kinds mock at the repository boundary** — the infrastructure edge. The difference is the entry point: unit tests call service methods directly; acceptance tests send HTTP requests and exercise the service for real.
+
+#### Unit tests (`<feature>-service.test.ts`)
+
+Call service methods directly with a mocked repository. Focus on what the service *does*, not HTTP.
 
 ```ts
-function buildApp(service: UsersService) {
+describe('UsersService.get', () => {
+  it('returns undefined when not found', async () => {
+    const service = createUsersService(mockRepo({ findById: async () => undefined }))
+    assert.equal(await service.get('non-existent-id'), undefined)
+  })
+})
+```
+
+#### Acceptance tests (`<feature>-router.test.ts`)
+
+Build a minimal Fastify app with the real service wired to a mocked repository. Never import `createApp()` — register only the router under test.
+
+```ts
+function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
+  const service = createUsersService(mockRepo(repoOverrides))
   const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
@@ -324,25 +362,29 @@ function buildApp(service: UsersService) {
 }
 ```
 
-**Router tests mock the service** (the direct dependency of the router), not the repository. Use a factory function with "not implemented" stubs and partial overrides:
+Focus on HTTP contract: status codes, response shapes, validation rejections.
 
 ```ts
-function mockService(overrides: Partial<UsersService> = {}): UsersService {
+it('returns 201 when user is created', async (t) => {
+  const app = buildApp({ upsert: async () => ({ user: mockUser, created: true }) })
+  t.after(() => app.close())
+  const res = await app.inject({ method: 'PUT', url: '/users/' + mockUser.id, payload })
+  assert.equal(res.statusCode, 201)
+})
+```
+
+#### Mock factory pattern
+
+Use a factory function with "not implemented" stubs for all port methods and accept partial overrides. Never use a mocking library.
+
+```ts
+function mockRepo(overrides: Partial<UsersRepository> = {}): UsersRepository {
   const notImplemented = (): never => { throw new Error('Not implemented') }
-  return { list: notImplemented, get: notImplemented, ...overrides }
+  return { findAll: notImplemented, findById: notImplemented, ...overrides }
 }
 ```
 
-**Always close the app** in `t.after()` to prevent resource leaks:
-
-```ts
-it('returns 200', async (t) => {
-  const app = buildApp(mockRepo({ findAll: async () => [] }))
-  t.after(() => app.close())
-  const res = await app.inject({ method: 'GET', url: '/users' })
-  assert.equal(res.statusCode, 200)
-})
-```
+**Always close the app** in `t.after()` to prevent resource leaks.
 
 Run tests with `just test` (requires services to be running).
 

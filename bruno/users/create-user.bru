@@ -4,10 +4,14 @@ meta {
   seq: 2
 }
 
-post {
-  url: {{baseUrl}}/users
+put {
+  url: {{baseUrl}}/users/{{userId}}
   body: json
   auth: none
+}
+
+params:path {
+  userId: {{$randomUUID}}
 }
 
 body:json {
