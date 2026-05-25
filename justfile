@@ -92,6 +92,10 @@ test-unit:
 test-acceptance:
     docker compose exec --user node api pnpm --filter @monowork/api test:acceptance
 
+# Run integration tests (repository layer, requires running services)
+test-integration:
+    docker compose exec --user node api pnpm --filter @monowork/api test:integration
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 # Push schema to the running database (no migration files)
