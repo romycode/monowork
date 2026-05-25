@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+just format
+
+if ! git diff --quiet; then
+  git add -u
+  git commit --no-verify -m "chore: format"
+fi

@@ -1,7 +1,11 @@
 import type {User, UsersRepository} from '#/users/users-repository'
 
 type UpsertUserInput = { email: string; name: string; password: string }
-type UpdateUserInput = { email?: string | undefined; name?: string | undefined; password?: string | undefined }
+type UpdateUserInput = {
+  email?: string | undefined
+  name?: string | undefined
+  password?: string | undefined
+}
 
 export type UsersService = {
   list: () => Promise<User[]>

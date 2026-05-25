@@ -9,7 +9,7 @@ default:
 # ── Services ──────────────────────────────────────────────────────────────────
 
 # Bootstrap: build production image then start all services
-setup: build install start
+setup: build install start hooks
 
 # Build the development image used by compose
 build:
@@ -40,6 +40,13 @@ logs:
 cli:
     docker compose run --rm -it --user node api bash
 
+# ── Git hooks ─────────────────────────────────────────────────────────────────
+
+# Configure git to use the project's hooks from .githooks/
+hooks:
+    git config core.hooksPath .githooks
+    chmod +x .githooks/*
+
 # ── Dependencies ──────────────────────────────────────────────────────────────
 
 # Reinstall dependencies in all service containers (run after adding a package)
@@ -51,31 +58,39 @@ install:
 
 # Lint all packages
 lint:
-    docker compose exec --user node api pnpm --filter @monowork/api lint
-    docker compose exec --user node app pnpm --filter @monowork/app lint
+    docker compose run --rm --no-deps --user node api pnpm --filter @monowork/api lint
+    docker compose run --rm --no-deps --user node app pnpm --filter @monowork/app lint
 
 # Lint and autofix all packages
 lint-fix:
-    docker compose exec --user node api pnpm --filter @monowork/api lint:fix
-    docker compose exec --user node app pnpm --filter @monowork/app lint:fix
+    docker compose run --rm --no-deps --user node api pnpm --filter @monowork/api lint:fix
+    docker compose run --rm --no-deps --user node app pnpm --filter @monowork/app lint:fix
 
 # Format all packages
 format:
-    docker compose exec --user node api pnpm --filter @monowork/api format
-    docker compose exec --user node app pnpm --filter @monowork/app format
+    docker compose run --rm --no-deps --user node api pnpm --filter @monowork/api format
+    docker compose run --rm --no-deps --user node app pnpm --filter @monowork/app format
 
 # Check formatting across all packages
 format-check:
-    docker compose exec --user node api pnpm --filter @monowork/api format:check
-    docker compose exec --user node app pnpm --filter @monowork/app format:check
+    docker compose run --rm --no-deps --user node api pnpm --filter @monowork/api format:check
+    docker compose run --rm --no-deps --user node app pnpm --filter @monowork/app format:check
 
 # TypeScript type check (api)
 typecheck:
     docker compose exec --user node api pnpm --filter @monowork/api typecheck
 
-# Run api tests (requires services to be running)
+# Run all api tests
 test:
     docker compose exec --user node api pnpm --filter @monowork/api test
+
+# Run unit tests (service layer, no I/O)
+test-unit:
+    docker compose exec --user node api pnpm --filter @monowork/api test:unit
+
+# Run acceptance tests (HTTP layer, mocked repository)
+test-acceptance:
+    docker compose exec --user node api pnpm --filter @monowork/api test:acceptance
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
