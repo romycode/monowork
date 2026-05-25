@@ -71,7 +71,7 @@ export function createApp() {
   })
 
   void app.register(healthRouter)
-  void app.register(usersRouter, { service: userService(createUsersRepository(db)) })
+  void app.register(usersRouter, { usersService: userService(createUsersRepository(db)) })
 
   return app
 }

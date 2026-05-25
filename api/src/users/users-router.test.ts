@@ -15,7 +15,7 @@ function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
   const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
-  void app.register(usersRouter, { service })
+  void app.register(usersRouter, { usersService: service })
   return app
 }
 
