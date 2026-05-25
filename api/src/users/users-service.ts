@@ -1,4 +1,4 @@
-import type {User, UsersRepository} from '#/users/users-repository'
+import type { User, UsersRepository } from '#/users/users-repository'
 
 type UpsertUserInput = { email: string; name: string; password: string }
 type UpdateUserInput = {

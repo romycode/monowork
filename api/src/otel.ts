@@ -1,12 +1,12 @@
-import {env} from '#/env'
-import {OTLPMetricExporter} from '@opentelemetry/exporter-metrics-otlp-http'
-import {OTLPTraceExporter} from '@opentelemetry/exporter-trace-otlp-http'
-import {HttpInstrumentation} from '@opentelemetry/instrumentation-http'
-import {PgInstrumentation} from '@opentelemetry/instrumentation-pg'
-import {resourceFromAttributes} from '@opentelemetry/resources'
-import {PeriodicExportingMetricReader} from '@opentelemetry/sdk-metrics'
-import {NodeSDK} from '@opentelemetry/sdk-node'
-import {ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION} from '@opentelemetry/semantic-conventions'
+import { env } from '#/env'
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
+import { PgInstrumentation } from '@opentelemetry/instrumentation-pg'
+import { resourceFromAttributes } from '@opentelemetry/resources'
+import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics'
+import { NodeSDK } from '@opentelemetry/sdk-node'
+import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions'
 
 // NOTE: there is NO logging here. The Logs signal in OTel JS is still
 // experimental (0.x packages with breaking changes). Logs go through pino-loki

@@ -1,6 +1,6 @@
-import {type DB} from '#/db/index'
-import {users} from '#/users/users-schema'
-import {eq} from 'drizzle-orm'
+import { type DB } from '#/db/index'
+import { users } from '#/users/users-schema'
+import { eq } from 'drizzle-orm'
 
 type UserRecord = typeof users.$inferSelect
 

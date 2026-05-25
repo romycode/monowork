@@ -1,5 +1,5 @@
-import type {FastifyPluginAsyncZod} from '@fastify/type-provider-zod'
-import {z} from 'zod'
+import type { FastifyPluginAsyncZod } from '@fastify/type-provider-zod'
+import { z } from 'zod'
 
 export const healthRouter: FastifyPluginAsyncZod = async (fastify) => {
   fastify.get(

@@ -1,11 +1,11 @@
-import type {User, UsersRepository} from '#/users/users-repository'
-import {usersRouter} from '#/users/users-router'
-import {createUsersService} from '#/users/users-service'
-import type {ZodTypeProvider} from '@fastify/type-provider-zod'
-import {serializerCompiler, validatorCompiler} from '@fastify/type-provider-zod'
+import type { User, UsersRepository } from '#/users/users-repository'
+import { usersRouter } from '#/users/users-router'
+import { createUsersService } from '#/users/users-service'
+import type { ZodTypeProvider } from '@fastify/type-provider-zod'
+import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
 import Fastify from 'fastify'
 import assert from 'node:assert/strict'
-import {describe, it} from 'node:test'
+import { describe, it } from 'node:test'
 
 const mockUser: User = {
   id: crypto.randomUUID(),

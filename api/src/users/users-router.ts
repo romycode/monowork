@@ -1,6 +1,6 @@
-import type {UsersService} from '#/users/users-service'
-import type {FastifyPluginAsyncZod} from '@fastify/type-provider-zod'
-import {z} from 'zod'
+import type { UsersService } from '#/users/users-service'
+import type { FastifyPluginAsyncZod } from '@fastify/type-provider-zod'
+import { z } from 'zod'
 
 const userSchema = z.object({
   id: z.uuid(),

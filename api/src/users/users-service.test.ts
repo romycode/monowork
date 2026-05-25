@@ -1,7 +1,7 @@
-import type {User, UsersRepository} from '#/users/users-repository'
-import {createUsersService} from '#/users/users-service'
+import type { User, UsersRepository } from '#/users/users-repository'
+import { createUsersService } from '#/users/users-service'
 import assert from 'node:assert/strict'
-import {describe, it} from 'node:test'
+import { describe, it } from 'node:test'
 
 const mockUser: User = {
   id: crypto.randomUUID(),
