@@ -3,7 +3,7 @@ import { mock } from 'node:test'
 
 export function buildUser(overrides: Partial<User> = {}): User {
   return {
-    id: '00000000-0000-4000-8000-000000000001',
+    id: '01900000-0000-7000-8000-000000000001',
     email: 'alice@example.com',
     name: 'Alice',
     createdAt: new Date('2024-01-01T00:00:00.000Z'),

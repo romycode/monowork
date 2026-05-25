@@ -2,6 +2,7 @@ import { db } from '#/db/index'
 import { createUsersRepository } from '#/users/users-repository'
 import { users } from '#/users/users-schema'
 import assert from 'node:assert/strict'
+import { randomUUIDv7 } from 'node:crypto'
 import { after, beforeEach, describe, it } from 'node:test'
 
 const repo = createUsersRepository(db)
@@ -15,7 +16,7 @@ after(async () => {
 })
 
 async function insertUser(overrides: Partial<{ email: string; name: string }> = {}) {
-  const id = crypto.randomUUID()
+  const id = randomUUIDv7()
   const { user } = await repo.upsert(id, {
     email: overrides.email ?? `user-${id}@example.com`,
     name: overrides.name ?? 'Alice',
@@ -46,13 +47,13 @@ describe('UsersRepository.findById', () => {
   })
 
   it('returns undefined when not found', async () => {
-    assert.equal(await repo.findById(crypto.randomUUID()), undefined)
+    assert.equal(await repo.findById(randomUUIDv7()), undefined)
   })
 })
 
 describe('UsersRepository.upsert', () => {
   it('creates a new user and returns created=true', async () => {
-    const id = crypto.randomUUID()
+    const id = randomUUIDv7()
     const { user, created } = await repo.upsert(id, {
       email: 'alice@example.com',
       name: 'Alice',
@@ -65,7 +66,7 @@ describe('UsersRepository.upsert', () => {
   })
 
   it('returns the existing user with created=false on replay', async () => {
-    const id = crypto.randomUUID()
+    const id = randomUUIDv7()
     const input = { email: 'alice@example.com', name: 'Alice', password: 'password123' }
     await repo.upsert(id, input)
     const { user, created } = await repo.upsert(id, input)
@@ -84,7 +85,7 @@ describe('UsersRepository.update', () => {
   })
 
   it('returns undefined when the user does not exist', async () => {
-    assert.equal(await repo.update(crypto.randomUUID(), { name: 'Nobody' }), undefined)
+    assert.equal(await repo.update(randomUUIDv7(), { name: 'Nobody' }), undefined)
   })
 })
 
@@ -98,6 +99,6 @@ describe('UsersRepository.remove', () => {
   })
 
   it('returns undefined when the user does not exist', async () => {
-    assert.equal(await repo.remove(crypto.randomUUID()), undefined)
+    assert.equal(await repo.remove(randomUUIDv7()), undefined)
   })
 })

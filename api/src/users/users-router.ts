@@ -12,7 +12,7 @@ const userSchema = z.object({
 
 const notFoundSchema = z.object({ message: z.string() })
 
-const idParam = z.object({ id: z.uuid({ version: 'v4' }) })
+const idParam = z.object({ id: z.uuid({ version: 'v7' }) })
 
 const userBody = z.object({
   email: z.email(),
