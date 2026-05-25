@@ -54,7 +54,8 @@ api/
 │       ├── <feature>-service.ts     # Business logic (inbound port)
 │       ├── <feature>-router.ts      # HTTP adapter — thin, delegates to service
 │       ├── <feature>-service.test.ts # Unit tests — mocks repository, tests service logic
-│       └── <feature>-router.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
+│       ├── <feature>-router.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
+│       └── <feature>-test-helpers.ts # Builders + mockRepo (excluded from production build)
 ├── drizzle.config.ts
 ├── tsconfig.json
 ├── tsconfig.build.json       # Excludes tests/seed from production build
@@ -324,7 +325,7 @@ The API uses Node's built-in test runner with no external test framework.
 | Test runner | `node:test` (`describe`, `it`) |
 | Assertions | `node:assert/strict` |
 | HTTP testing | `app.inject()` (no real server) |
-| Mocking | Manual factory functions (no mocking library) |
+| Mocking | `mock.fn()` from `node:test` — no external mocking library |
 
 Each feature slice has two test files:
 
@@ -335,6 +336,46 @@ Each feature slice has two test files:
 
 **Both test kinds mock at the repository boundary** — the infrastructure edge. The difference is the entry point: unit tests call service methods directly; acceptance tests send HTTP requests and exercise the service for real.
 
+#### Domain object builders
+
+Each feature exposes a `<feature>-test-helpers.ts` file (excluded from the production build) with builder functions for domain objects. Builders provide valid defaults and accept partial overrides, keeping tests focused on what varies.
+
+```ts
+// users-test-helpers.ts
+export function buildUser(overrides: Partial<User> = {}): User {
+  return {
+    id: '00000000-0000-4000-8000-000000000001',
+    email: 'alice@example.com',
+    name: 'Alice',
+    createdAt: new Date('2024-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+    ...overrides,
+  }
+}
+```
+
+Use the builder anywhere a domain object is needed:
+
+```ts
+const user = buildUser()
+const updated = buildUser({ name: 'Alicia' })
+```
+
+#### Mock factory pattern
+
+Each feature's test helpers also export a `mockRepo` factory. Every port method is wrapped with `mock.fn()` from `node:test` — unset methods throw `'not implemented'`, and all methods track calls via `.mock` for future assertions.
+
+```ts
+export function mockRepo(overrides: Partial<UsersRepository> = {}): UsersRepository {
+  const notImpl = (): never => { throw new Error('not implemented') }
+  return {
+    findAll: mock.fn(overrides.findAll ?? (notImpl as UsersRepository['findAll'])),
+    findById: mock.fn(overrides.findById ?? (notImpl as UsersRepository['findById'])),
+    // …
+  }
+}
+```
+
 #### Unit tests (`<feature>-service.test.ts`)
 
 Call service methods directly with a mocked repository. Focus on what the service *does*, not HTTP.
@@ -342,8 +383,8 @@ Call service methods directly with a mocked repository. Focus on what the servic
 ```ts
 describe('UsersService.get', () => {
   it('returns undefined when not found', async () => {
-    const service = createUsersService(mockRepo({ findById: async () => undefined }))
-    assert.equal(await service.get('non-existent-id'), undefined)
+    const service = userService(mockRepo({ findById: async () => undefined }))
+    assert.equal(await service.get('non-existent'), undefined)
   })
 })
 ```
@@ -354,7 +395,7 @@ Build a minimal Fastify app with the real service wired to a mocked repository. 
 
 ```ts
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
-  const service = createUsersService(mockRepo(repoOverrides))
+  const service = userService(mockRepo(repoOverrides))
   const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
@@ -367,22 +408,12 @@ Focus on HTTP contract: status codes, response shapes, validation rejections.
 
 ```ts
 it('returns 201 when user is created', async (t) => {
-  const app = buildApp({ upsert: async () => ({ user: mockUser, created: true }) })
+  const user = buildUser()
+  const app = buildApp({ upsert: async () => ({ user, created: true }) })
   t.after(() => app.close())
-  const res = await app.inject({ method: 'PUT', url: '/users/' + mockUser.id, payload })
+  const res = await app.inject({ method: 'PUT', url: '/users/' + user.id, payload })
   assert.equal(res.statusCode, 201)
 })
-```
-
-#### Mock factory pattern
-
-Use a factory function with "not implemented" stubs for all port methods and accept partial overrides. Never use a mocking library.
-
-```ts
-function mockRepo(overrides: Partial<UsersRepository> = {}): UsersRepository {
-  const notImplemented = (): never => { throw new Error('Not implemented') }
-  return { findAll: notImplemented, findById: notImplemented, ...overrides }
-}
 ```
 
 **Always close the app** in `t.after()` to prevent resource leaks.
