@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "dev": "tsx --watch --import ./src/otel.ts src/index.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "start": "node --import ./dist/src/otel.js ./dist/src/index.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
@@ -18,10 +18,15 @@
     "db:studio": "drizzle-kit studio"
   },
   "devDependencies": {
+    "@tsconfig/node-ts": "^23.6.4",
+    "@tsconfig/node24": "^24.0.4",
     "@types/node": "catalog:",
-    "drizzle-kit": "^0.31.10",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "1.0.0-beta.22",
+    "drizzle-seed": "^0.3.1",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
+    "tsc-alias": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:"
   },
@@ -29,10 +34,26 @@
     "node": ">=26.0.0"
   },
   "dependencies": {
+    "@fastify/otel": "^0.17.1",
     "@fastify/type-provider-zod": "^1.0.0",
-    "drizzle-orm": "^0.45.2",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "catalog:",
+    "@opentelemetry/exporter-trace-otlp-http": "catalog:",
+    "@opentelemetry/instrumentation": "catalog:",
+    "@opentelemetry/instrumentation-http": "catalog:",
+    "@opentelemetry/instrumentation-pg": "catalog:",
+    "@opentelemetry/resources": "catalog:",
+    "@opentelemetry/sdk-metrics": "catalog:",
+    "@opentelemetry/sdk-node": "catalog:",
+    "@opentelemetry/semantic-conventions": "catalog:",
+    "drizzle-orm": "1.0.0-beta.22",
     "fastify": "^5.8.5",
-    "postgres": "^3.4.9",
+    "pg": "^8.21.0",
+    "pino-loki": "^2.6.0",
     "zod": "^4.4.3"
+  },
+  "imports": {
+    "#/*.json": "./dist/src/*.json",
+    "#/*": "./dist/src/*.js"
   }
 }

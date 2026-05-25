@@ -1,9 +1,11 @@
-import { drizzle } from 'drizzle-orm/postgres-js'
-import postgres from 'postgres'
-import { env } from '../env.js'
-import * as schema from './schema.js'
+import {env} from '#/env'
+import {drizzle} from 'drizzle-orm/node-postgres'
 
-const client = postgres(env.DATABASE_URL)
+export const db = drizzle({
+  connection: {
+    connectionString: env.DATABASE_URL,
+    ssl: env.NODE_ENV === 'production',
+  },
+})
 
-export const db = drizzle(client, { schema })
 export type DB = typeof db

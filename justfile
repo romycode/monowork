@@ -34,7 +34,7 @@ clean:
 
 # Stream logs from all services (ctrl-c to exit)
 logs:
-    docker compose logs -f
+    docker compose logs -f api
 
 # Open a shell inside the api service as the node user
 shell:

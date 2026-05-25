@@ -1,5 +1,13 @@
 # Docker Compose v2 — no version field required (obsolete since Compose v2.27+)
 services:
+  ide:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+      target: development
+    working_dir: /monowork
+    volumes:
+      - .:/monowork
   api:
     build:
       context: .
@@ -9,23 +17,31 @@ services:
     working_dir: /monowork/api
     command: pnpm --filter @monowork/api dev
     ports:
-      - "3000:3000"
+      - "7000:7000"
     volumes:
       - .:/monowork
     environment:
       NODE_ENV: development
-      PORT: "3000"
+      PORT: "7000"
+      # DEP0205: register() deprecated in favour of registerHooks(), but import-in-the-middle
+      # only ships async hooks which the sync-only registerHooks() API cannot accept.
+      NODE_OPTIONS: "--disable-warning=DEP0205"
       DATABASE_URL: "postgres://monowork:monowork@postgres:5432/monowork"
+      OTEL_SERVICE_NAME: monowork-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
+      LOKI_ENDPOINT: http://otel-lgtm:3100
     depends_on:
       postgres:
         condition: service_healthy
+      otel-lgtm:
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test:
         - CMD
         - node
         - -e
-        - "fetch('http://localhost:3000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
+        - "fetch('http://localhost:7000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
       interval: 30s
       timeout: 5s
       retries: 3
@@ -40,7 +56,7 @@ services:
     working_dir: /monowork/app
     command: pnpm --filter @monowork/app dev
     ports:
-      - "5173:5173"
+      - "7001:7001"
     volumes:
       - .:/monowork
     environment:
@@ -51,7 +67,7 @@ services:
         - CMD
         - node
         - -e
-        - "fetch('http://localhost:5173').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
+        - "fetch('http://localhost:7001').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
       interval: 30s
       timeout: 5s
       retries: 3
@@ -64,7 +80,7 @@ services:
       POSTGRES_USER: monowork
       POSTGRES_PASSWORD: monowork
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:7002:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
@@ -74,9 +90,22 @@ services:
       timeout: 5s
       retries: 5
 
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "7010:3000"
+      - "7011:4317"
+      - "7012:4318"
+    volumes:
+      - otel_lgtm_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider -q http://localhost:3000/api/health 2>&1 || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 volumes:
-  api_root_modules:
-  api_pkg_modules:
-  app_root_modules:
-  app_pkg_modules:
   postgres_data:
+  otel_lgtm_data:

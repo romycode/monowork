@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "$schema": "./node_modules/.pnpm/oxlint@1.66.0/node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript"],
   "env": {
     "node": true,

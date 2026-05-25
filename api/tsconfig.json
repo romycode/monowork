@@ -1,7 +1,7 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    // Type checking — strict is now TS6 default, extras catch subtle bugs
-    "strict": true,
+    // Extra strictness beyond what @tsconfig/node24 provides
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noPropertyAccessFromIndexSignature": true,
@@ -10,29 +10,32 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-
-    // Module — NodeNext is required for Node.js ESM; "node" resolution is deprecated in TS6
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-
+    "removeComments": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
     // Emit
+    "forceConsistentCasingInFileNames": true,
     "target": "ESNext",
     "outDir": "dist",
-    "rootDir": "src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "incremental": true,
-
-    // Interop
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": false,
-    "skipLibCheck": true,
-
-    // Types default is now [] in TS6, so node must be explicit
-    "types": ["node"],
+    "rootDir": "./",
+    "paths": {
+      "#/*": [
+        "./src/*",
+        "./src/*.ts"
+      ]
+    },
+    // Types default is [] in TS6, so node must be explicit
+    "types": [
+      "node",
+      "drizzle-orm/pg-core"
+    ]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
+  "include": [
+    "src/**/*",
+    "drizzle.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

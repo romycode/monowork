@@ -11,5 +11,9 @@
     "node": ">=26.0.0",
     "pnpm": ">=11.0.0"
   },
-  "packageManager": "pnpm@11.3.0"
+  "packageManager": "pnpm@11.3.0",
+  "devDependencies": {
+    "@tsconfig/node-ts": "^23.6.4",
+    "@tsconfig/node24": "^24.0.4"
+  }
 }
