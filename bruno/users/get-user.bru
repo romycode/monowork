@@ -5,11 +5,11 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/users/{{userId}}
+  url: {{baseUrl}}/users/{{user-id}}
   body: none
   auth: none
 }
 
-params:path {
-  userId: 1
+vars:pre-request {
+  user-id: 232be67a-24fa-4daf-9753-722e0db49dfd
 }
