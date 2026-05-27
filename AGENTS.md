@@ -94,6 +94,15 @@ Key conventions:
 
 Vue 3 + Vite + Pinia + Vue Router. Uses `~/` as the `src/` path alias.
 
+## Work tracking
+
+All work MUST be tracked in [`docs/planing.md`](docs/planing.md). Before starting any task:
+
+1. **Before work begins** — add a row to the appropriate priority table in `docs/planing.md` with a description and today's date in the **Added** column. If the task already exists, skip this step. Also create a detailed plan file under `docs/plans/<task-slug>.md` describing the goal, scope, test cases or changes, and dependencies. Link it from the **Plan** column in the tracking table.
+2. **After work is complete** — fill in today's date in the **Completed** column for that row.
+
+Never start implementation without recording the task and its plan first. Never leave a finished task without marking it complete.
+
 ## Code conventions
 
 See [`docs/conventions.md`](docs/conventions.md) for the full reference covering formatting, naming, TypeScript strictness, testing patterns, and dependency management.
