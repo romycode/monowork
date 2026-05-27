@@ -13,7 +13,7 @@ import type { ZodTypeProvider } from '@fastify/type-provider-zod'
 import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
 import underPressure from '@fastify/under-pressure'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
-import Fastify from 'fastify'
+import Fastify, { type FastifyError } from 'fastify'
 
 function parseTrustProxy(value: string): boolean | string | string[] | number {
   if (value === 'true') return true
@@ -105,8 +105,8 @@ export function createApp() {
 
   // --- error sanitisation ---
 
-  app.setErrorHandler((err, req, reply) => {
-    const statusCode = (err as { statusCode?: number }).statusCode ?? 500
+  app.setErrorHandler<FastifyError>((err, req, reply) => {
+    const statusCode = err.statusCode ?? 500
 
     if (statusCode >= 500) {
       req.log.error(err)
@@ -128,13 +128,10 @@ export function createApp() {
       })
     }
 
-    const name = err instanceof Error ? err.name : 'Error'
-    const message = err instanceof Error ? err.message : 'Unknown error'
-
     return reply.code(statusCode).send({
       statusCode,
-      error: name,
-      message,
+      error: err.name,
+      message: err.message,
     })
   })
 
