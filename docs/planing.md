@@ -19,9 +19,9 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
-| Add `env.ts` unit tests | [env-unit-tests.md](plans/env-unit-tests.md) | 2026-05-27 | |
-| Add `test` script to `app/package.json` | [app-test-script.md](plans/app-test-script.md) | 2026-05-27 | |
-| Wire app tests into `just test` in the justfile | [wire-app-tests-justfile.md](plans/wire-app-tests-justfile.md) | 2026-05-27 | |
+| Add `env.ts` unit tests | [env-unit-tests.md](plans/env-unit-tests.md) | 2026-05-27 | 2026-05-27 |
+| Add `test` script to `app/package.json` | [app-test-script.md](plans/app-test-script.md) | 2026-05-27 | 2026-05-27 |
+| Wire app tests into `just test` in the justfile | [wire-app-tests-justfile.md](plans/wire-app-tests-justfile.md) | 2026-05-27 | 2026-05-27 |
 
 ### Priority 2 — Shared infrastructure
 
