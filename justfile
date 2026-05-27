@@ -80,9 +80,14 @@ format-check:
 typecheck:
     docker compose exec --user node api pnpm --filter @monowork/api typecheck
 
-# Run all api tests
+# Run all tests (api + app)
 test:
     docker compose exec --user node api pnpm --filter @monowork/api test
+    docker compose exec --user node app pnpm --filter @monowork/app test
+
+# Run app tests only
+test-app:
+    docker compose exec --user node app pnpm --filter @monowork/app test
 
 # Run unit tests (service layer, no I/O)
 test-unit:
