@@ -56,12 +56,21 @@ export function createApp() {
   const helmetOpts =
     env.NODE_ENV === 'development'
       ? { global: true, contentSecurityPolicy: false as const }
-      : { global: true }
+      : {
+          global: true,
+          contentSecurityPolicy: {
+            directives: {
+              defaultSrc: ["'none'"],
+              frameAncestors: ["'none'"],
+            },
+          },
+          hsts: { maxAge: 63_072_000, includeSubDomains: true, preload: true },
+        }
   void app.register(helmet, helmetOpts)
 
   void app.register(cors, {
     origin: env.CORS_ORIGIN === '*' ? true : env.CORS_ORIGIN.split(','),
-    methods: ['GET', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
     maxAge: 86_400,
