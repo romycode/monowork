@@ -15,6 +15,15 @@ import underPressure from '@fastify/under-pressure'
 import { SpanStatusCode, trace } from '@opentelemetry/api'
 import Fastify from 'fastify'
 
+function parseTrustProxy(value: string): boolean | string | string[] | number {
+  if (value === 'true') return true
+  if (value === 'false') return false
+  const num = Number(value)
+  if (Number.isInteger(num)) return num
+  if (value.includes(',')) return value.split(',').map((s) => s.trim())
+  return value
+}
+
 export function createApp() {
   const app = Fastify({
     logger:
@@ -46,7 +55,7 @@ export function createApp() {
             },
           },
     bodyLimit: 1_048_576,
-    trustProxy: true,
+    trustProxy: parseTrustProxy(env.TRUST_PROXY),
   }).withTypeProvider<ZodTypeProvider>()
 
   void app.register(new FastifyOtelInstrumentation().plugin())

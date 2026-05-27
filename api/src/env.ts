@@ -9,6 +9,7 @@ export const schema = z.object({
   OTEL_SERVICE_NAME: z.string().default('monowork-api'),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.url().default('http://otel-lgtm:4318'),
   OTEL_PG_ENHANCED: z.string().default('false'),
+  TRUST_PROXY: z.string().default('true'),
   CORS_ORIGIN: z.string().default('*'),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60_000),
