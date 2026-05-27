@@ -15,6 +15,12 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 
 ## Pending
 
+### Priority 0 — Security
+
+| Task | Plan | Added | Completed |
+|------|------|-------|-----------|
+| API security hardening (helmet, cors, rate-limit, under-pressure, error sanitisation) | [api-security-hardening.md](plans/api-security-hardening.md) | 2026-05-27 | 2026-05-27 |
+
 ### Priority 1 — Quick wins
 
 | Task | Plan | Added | Completed |
