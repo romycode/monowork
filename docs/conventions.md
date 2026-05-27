@@ -12,19 +12,22 @@ This document is the canonical reference for code style, project structure, and 
 4. [API Conventions](#api-conventions)
 5. [App Conventions](#app-conventions)
 6. [Testing](#testing)
-7. [Docker & Workflow](#docker--workflow)
-8. [Dependencies](#dependencies)
+7. [Bruno (API Client)](#bruno-api-client)
+8. [Docker & Workflow](#docker--workflow)
+9. [Dependencies](#dependencies)
 
 ---
 
 ## Project Structure
 
-This is a pnpm monorepo with two packages:
+This is a pnpm monorepo with workspace packages:
 
 ```
 monowork/
 ├── api/              # @monowork/api — Fastify 5 backend
 ├── app/              # @monowork/app — Vue 3 frontend
+├── packages/         # Shared workspace packages
+│   └── tracing/      # @monowork/tracing — OTel tracing utilities
 ├── bruno/            # Bruno API client collection
 ├── docs/             # Project documentation
 ├── compose.yml       # Docker Compose for all services
@@ -129,6 +132,30 @@ Run `just lint` to check, `just lint-fix` to autofix.
 - In `api/`, always use the `#/` path alias for internal imports. Never use relative paths that cross directories.
 - In `app/`, use the `~/` path alias for imports from `src/`.
 - Third-party imports go after internal imports (no automatic enforcement, but keep it consistent).
+
+### No barrel files
+
+Do not use `index.ts` barrel files that re-export from other modules. Every module is imported directly by its file path.
+
+```ts
+// correct — import from the specific module
+import { traced } from '@monowork/tracing/traced'
+import { withSpan } from '@monowork/tracing/helpers'
+
+// wrong — barrel re-export
+import { traced, withSpan } from '@monowork/tracing'
+```
+
+For workspace packages, use subpath exports in `package.json` to expose each module individually:
+
+```json
+{
+  "exports": {
+    "./traced": "./src/traced.ts",
+    "./helpers": "./src/helpers.ts"
+  }
+}
+```
 
 ```ts
 // api/ — correct
@@ -427,6 +454,36 @@ The frontend uses vitest with happy-dom and `@testing-library/vue`.
 - Co-locate tests next to the component or store being tested.
 - Use `@testing-library/vue` render utilities rather than manual Vue mount calls.
 - Run with `pnpm --filter @monowork/app test` (not wired into `just` yet).
+
+---
+
+## Bruno (API Client)
+
+[Bruno](https://www.usebruno.com/) is the API client for manual testing and exploring endpoints. The collection lives in `bruno/` at the repository root.
+
+### Layout
+
+```
+bruno/
+├── bruno.json                  # Collection metadata
+├── environments/
+│   └── development.bru         # baseUrl: http://localhost:7000
+├── health.bru                  # GET /health
+└── users/
+    ├── list-users.bru          # GET /users
+    ├── create-user.bru         # PUT /users/:id
+    ├── get-user.bru            # GET /users/:id
+    ├── update-user.bru         # PATCH /users/:id
+    └── delete-user.bru         # DELETE /users/:id
+```
+
+### Conventions
+
+- One `.bru` file per endpoint, named with the action in kebab-case (`create-user.bru`, not `PUT-user.bru`).
+- Group files by feature in subdirectories matching the API feature directories (`users/`, etc.).
+- Use the `development` environment for local testing — it points to `http://localhost:7000`.
+- Keep request bodies minimal and representative. Use UUID v7 for IDs.
+- When adding a new feature with HTTP endpoints, add the corresponding Bruno requests in `bruno/<feature>/`.
 
 ---
 

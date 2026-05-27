@@ -42,6 +42,7 @@
     "typescript": "catalog:"
   },
   "dependencies": {
+    "@monowork/tracing": "workspace:*",
     "@fastify/otel": "^0.17.1",
     "@fastify/type-provider-zod": "^1.0.0",
     "@opentelemetry/api": "^1.9.1",

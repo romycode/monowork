@@ -1,0 +1,18 @@
+{
+  "name": "@monowork/tracing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./traced": "./src/traced.ts",
+    "./helpers": "./src/helpers.ts"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "@types/node": "catalog:",
+    "@opentelemetry/api": "catalog:"
+  }
+}
