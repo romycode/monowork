@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    "./traced": "./src/traced.ts",
+    "./helpers": "./src/helpers.ts"
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0"
