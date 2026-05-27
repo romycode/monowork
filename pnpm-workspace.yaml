@@ -1,6 +1,7 @@
 packages:
   - "api"
   - "app"
+  - "packages/*"
 
 catalog:
   typescript: "6.0.3"
