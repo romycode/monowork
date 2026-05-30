@@ -37,6 +37,7 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
 | Add counter store unit test | [counter-store-test.md](plans/counter-store-test.md) | 2026-05-27 | |
+| User management dashboard | [user-management-dashboard.md](plans/user-management-dashboard.md) | 2026-05-30 | 2026-05-30 |
 
 ### Priority 4 — Project management
 
