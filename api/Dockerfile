@@ -17,34 +17,30 @@ RUN npm install -g "$(node -p 'require("./package.json").packageManager')" && \
 FROM base AS development
 EXPOSE 3000
 
-# ── Fetch ─────────────────────────────────────────────────────────────────────
-# pnpm fetch only needs the lockfile — cached until dependencies change.
-FROM base AS fetch
-USER node
-COPY --link --chown=node:node pnpm-lock.yaml ./
-RUN pnpm fetch
-
-# ── Deps ──────────────────────────────────────────────────────────────────────
-# Installs node_modules offline from the virtual store built in fetch.
-FROM fetch AS deps
-COPY --link --chown=node:node package.json pnpm-workspace.yaml ./
-COPY --link --chown=node:node api/package.json ./api/
-RUN pnpm install --offline --frozen-lockfile --filter @monowork/api
-
 # ── Build ─────────────────────────────────────────────────────────────────────
-FROM deps AS build
-COPY --link --chown=node:node api ./api
+# Single stage following pnpm's Docker guide: install with a persistent store
+# cache mount, build, then `pnpm deploy` to assemble a self-contained directory
+# with only production node_modules for @monowork/api. Runs as root so the
+# deploy target outside /app (`/prod/api`) can be created.
+FROM base AS build
+COPY --link . .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 RUN pnpm --filter @monowork/api build
+RUN pnpm deploy --filter @monowork/api --prod /prod/api
 
 # ── Production ────────────────────────────────────────────────────────────────
-# Minimal runtime image — only the compiled output and production manifest.
+# Minimal runtime image — no pnpm, no devDependencies, no source files. The
+# deploy directory already holds a pruned production node_modules and the
+# compiled output, so we copy it wholesale.
 FROM node:26-slim AS production
 WORKDIR /app
-COPY --link --from=build /app/api/dist ./dist
-COPY --link --from=build /app/api/package.json ./
+COPY --link --from=build /prod/api/package.json ./
+COPY --link --from=build /prod/api/node_modules ./node_modules
+COPY --link --from=build /prod/api/dist ./dist
 ENV NODE_ENV=production
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://localhost:3000').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
-CMD ["node", "dist/index.js"]
+CMD ["node", "--import", "./dist/src/otel.js", "./dist/src/index.js"]
