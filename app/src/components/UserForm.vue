@@ -52,17 +52,25 @@ function onSubmit() {
 
 <template>
   <form class="user-form" @submit.prevent="onSubmit">
-    <h2>{{ isEditing ? 'Edit user' : 'Add user' }}</h2>
+    <h2 class="user-form__title">{{ isEditing ? 'Edit user' : 'Add user' }}</h2>
 
-    <label>
-      <span>Name</span>
-      <input v-model="form.name" type="text" name="name" placeholder="Ada Lovelace" required />
+    <label class="user-form__field">
+      <span class="user-form__label">Name</span>
+      <input
+        v-model="form.name"
+        class="user-form__input"
+        type="text"
+        name="name"
+        placeholder="Ada Lovelace"
+        required
+      />
     </label>
 
-    <label>
-      <span>Email</span>
+    <label class="user-form__field">
+      <span class="user-form__label">Email</span>
       <input
         v-model="form.email"
+        class="user-form__input"
         type="email"
         name="email"
         placeholder="ada@example.com"
@@ -70,10 +78,11 @@ function onSubmit() {
       />
     </label>
 
-    <label>
-      <span>Password</span>
+    <label class="user-form__field">
+      <span class="user-form__label">Password</span>
       <input
         v-model="form.password"
+        class="user-form__input"
         type="password"
         name="password"
         :placeholder="isEditing ? 'Leave blank to keep current' : 'At least 8 characters'"
@@ -82,11 +91,16 @@ function onSubmit() {
       />
     </label>
 
-    <div class="actions">
-      <button type="submit" :disabled="!canSubmit">
+    <div class="user-form__actions">
+      <button class="user-form__button" type="submit" :disabled="!canSubmit">
         {{ isEditing ? 'Save changes' : 'Create user' }}
       </button>
-      <button v-if="isEditing" type="button" class="secondary" @click="emit('cancel')">
+      <button
+        v-if="isEditing"
+        class="user-form__button user-form__button--secondary"
+        type="button"
+        @click="emit('cancel')"
+      >
         Cancel
       </button>
     </div>
@@ -104,12 +118,12 @@ function onSubmit() {
   background: #fff;
 }
 
-.user-form h2 {
+.user-form__title {
   margin: 0 0 0.25rem;
   font-size: 1.1rem;
 }
 
-label {
+.user-form__field {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -117,20 +131,20 @@ label {
   color: #475569;
 }
 
-input {
+.user-form__input {
   padding: 0.5rem 0.625rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.9rem;
 }
 
-.actions {
+.user-form__actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.25rem;
 }
 
-button {
+.user-form__button {
   padding: 0.5rem 0.875rem;
   border: none;
   border-radius: 6px;
@@ -140,12 +154,12 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
+.user-form__button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-button.secondary {
+.user-form__button--secondary {
   background: #e2e8f0;
   color: #1e293b;
 }

@@ -45,21 +45,23 @@ async function onRemove(user: User) {
 
 <template>
   <section class="dashboard">
-    <header>
-      <h1>User Management</h1>
-      <p>{{ users.length }} {{ users.length === 1 ? 'user' : 'users' }}</p>
+    <header class="dashboard__header">
+      <h1 class="dashboard__title">User Management</h1>
+      <p class="dashboard__count">{{ users.length }} {{ users.length === 1 ? 'user' : 'users' }}</p>
     </header>
 
-    <p v-if="error" class="error" role="alert">{{ error }}</p>
+    <p v-if="error" class="dashboard__error" role="alert">{{ error }}</p>
 
-    <div class="layout">
-      <div class="list">
-        <p v-if="loading" class="muted">Loading users…</p>
-        <p v-else-if="users.length === 0" class="muted">No users yet. Add one to get started.</p>
+    <div class="dashboard__layout">
+      <div class="dashboard__list">
+        <p v-if="loading" class="dashboard__message">Loading users…</p>
+        <p v-else-if="users.length === 0" class="dashboard__message">
+          No users yet. Add one to get started.
+        </p>
         <UserTable v-else :users="users" @edit="onEdit" @remove="onRemove" />
       </div>
 
-      <aside class="form">
+      <aside class="dashboard__form">
         <UserForm :editing="editing" @submit="onSubmit" @cancel="onCancel" />
       </aside>
     </div>
@@ -73,24 +75,24 @@ async function onRemove(user: User) {
   padding: 2rem 1.5rem;
 }
 
-header {
+.dashboard__header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   margin-bottom: 1.5rem;
 }
 
-header h1 {
+.dashboard__title {
   margin: 0;
   font-size: 1.5rem;
 }
 
-header p {
+.dashboard__count {
   margin: 0;
   color: #64748b;
 }
 
-.layout {
+.dashboard__layout {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
@@ -98,12 +100,12 @@ header p {
 }
 
 @media (max-width: 720px) {
-  .layout {
+  .dashboard__layout {
     grid-template-columns: 1fr;
   }
 }
 
-.error {
+.dashboard__error {
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
   border-radius: 6px;
@@ -112,7 +114,7 @@ header p {
   border: 1px solid #fecaca;
 }
 
-.muted {
+.dashboard__message {
   color: #94a3b8;
   padding: 1rem;
 }
