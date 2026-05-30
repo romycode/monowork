@@ -89,7 +89,7 @@ async function onRemove(user: User) {
 
 .dashboard__count {
   margin: 0;
-  color: #64748b;
+  color: var(--color-muted);
 }
 
 .dashboard__layout {
@@ -108,14 +108,14 @@ async function onRemove(user: User) {
 .dashboard__error {
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+  border: 1px solid var(--color-danger-border);
 }
 
 .dashboard__message {
-  color: #94a3b8;
+  color: var(--color-subtle);
   padding: 1rem;
 }
 </style>

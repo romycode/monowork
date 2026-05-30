@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
+import BaseButton from '~/components/base/BaseButton.vue'
+import BaseCard from '~/components/base/BaseCard.vue'
+import BaseInput from '~/components/base/BaseInput.vue'
 import type { User } from '~/lib/api'
 
 type Payload = { email: string; name: string; password: string }
@@ -51,60 +54,39 @@ function onSubmit() {
 </script>
 
 <template>
-  <form class="user-form" @submit.prevent="onSubmit">
-    <h2 class="user-form__title">{{ isEditing ? 'Edit user' : 'Add user' }}</h2>
+  <BaseCard>
+    <form class="user-form" @submit.prevent="onSubmit">
+      <h2 class="user-form__title">{{ isEditing ? 'Edit user' : 'Add user' }}</h2>
 
-    <label class="user-form__field">
-      <span class="user-form__label">Name</span>
-      <input
-        v-model="form.name"
-        class="user-form__input"
-        type="text"
-        name="name"
-        placeholder="Ada Lovelace"
-        required
-      />
-    </label>
-
-    <label class="user-form__field">
-      <span class="user-form__label">Email</span>
-      <input
+      <BaseInput v-model="form.name" label="Name" name="name" placeholder="Ada Lovelace" required />
+      <BaseInput
         v-model="form.email"
-        class="user-form__input"
+        label="Email"
         type="email"
         name="email"
         placeholder="ada@example.com"
         required
       />
-    </label>
-
-    <label class="user-form__field">
-      <span class="user-form__label">Password</span>
-      <input
+      <BaseInput
         v-model="form.password"
-        class="user-form__input"
+        label="Password"
         type="password"
         name="password"
         :placeholder="isEditing ? 'Leave blank to keep current' : 'At least 8 characters'"
         :required="!isEditing"
-        minlength="8"
+        :minlength="8"
       />
-    </label>
 
-    <div class="user-form__actions">
-      <button class="user-form__button" type="submit" :disabled="!canSubmit">
-        {{ isEditing ? 'Save changes' : 'Create user' }}
-      </button>
-      <button
-        v-if="isEditing"
-        class="user-form__button user-form__button--secondary"
-        type="button"
-        @click="emit('cancel')"
-      >
-        Cancel
-      </button>
-    </div>
-  </form>
+      <div class="user-form__actions">
+        <BaseButton type="submit" :disabled="!canSubmit">
+          {{ isEditing ? 'Save changes' : 'Create user' }}
+        </BaseButton>
+        <BaseButton v-if="isEditing" variant="secondary" type="button" @click="emit('cancel')">
+          Cancel
+        </BaseButton>
+      </div>
+    </form>
+  </BaseCard>
 </template>
 
 <style scoped>
@@ -112,10 +94,6 @@ function onSubmit() {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 1.25rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff;
 }
 
 .user-form__title {
@@ -123,44 +101,9 @@ function onSubmit() {
   font-size: 1.1rem;
 }
 
-.user-form__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  color: #475569;
-}
-
-.user-form__input {
-  padding: 0.5rem 0.625rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
 .user-form__actions {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.25rem;
-}
-
-.user-form__button {
-  padding: 0.5rem 0.875rem;
-  border: none;
-  border-radius: 6px;
-  background: #2563eb;
-  color: #fff;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.user-form__button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.user-form__button--secondary {
-  background: #e2e8f0;
-  color: #1e293b;
 }
 </style>
