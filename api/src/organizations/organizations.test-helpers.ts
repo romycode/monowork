@@ -22,9 +22,7 @@ export function mockRepo(
   return {
     findAll: mock.fn(overrides.findAll ?? (notImpl as OrganizationsRepository['findAll'])),
     findById: mock.fn(overrides.findById ?? (notImpl as OrganizationsRepository['findById'])),
-    findBySlug: mock.fn(
-      overrides.findBySlug ?? (notImpl as OrganizationsRepository['findBySlug']),
-    ),
+    findBySlug: mock.fn(overrides.findBySlug ?? (notImpl as OrganizationsRepository['findBySlug'])),
     upsert: mock.fn(overrides.upsert ?? (notImpl as OrganizationsRepository['upsert'])),
     update: mock.fn(overrides.update ?? (notImpl as OrganizationsRepository['update'])),
     remove: mock.fn(overrides.remove ?? (notImpl as OrganizationsRepository['remove'])),
