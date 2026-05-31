@@ -20,8 +20,25 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Users — guard mutations against soft-deleted records | [users-soft-delete-guard-mutations.md](plans/users-soft-delete-guard-mutations.md) | 2026-05-31 | 2026-05-31 |
 | Users — split domain model from database model | [users-domain-db-split.md](plans/users-domain-db-split.md) | 2026-05-31 | 2026-05-31 |
 | Rename existing files to new naming convention | [rename-to-new-convention.md](plans/rename-to-new-convention.md) | 2026-05-31 | 2026-05-31 |
+| Multitenant RBAC — architecture & design | [multitenant-rbac-design.md](plans/multitenant-rbac-design.md) | 2026-05-31 | 2026-05-31 |
 
 ## Pending
+
+### Priority 1 — Multitenant RBAC
+
+Implements the design in [multitenant-rbac-design.md](plans/multitenant-rbac-design.md).
+Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
+
+| Task | Plan | Added | Completed |
+|------|------|-------|-----------|
+| Phase 1 — Organizations slice | [rbac-organizations.md](plans/rbac-organizations.md) | 2026-05-31 | |
+| Phase 2 — Memberships slice | [rbac-memberships.md](plans/rbac-memberships.md) | 2026-05-31 | |
+| Phase 3 — Roles, permissions & catalog | [rbac-roles-permissions.md](plans/rbac-roles-permissions.md) | 2026-05-31 | |
+| Phase 4 — Membership ↔ roles bridge | [rbac-membership-roles.md](plans/rbac-membership-roles.md) | 2026-05-31 | |
+| Phase 5 — Permission resolution & route guard | [rbac-authz-resolution.md](plans/rbac-authz-resolution.md) | 2026-05-31 | |
+| Phase 6 — Staff / platform layer | [rbac-staff-platform.md](plans/rbac-staff-platform.md) | 2026-05-31 | |
+| Phase 7 — Impersonation, audit log & JIT elevation | [rbac-staff-impersonation-audit.md](plans/rbac-staff-impersonation-audit.md) | 2026-05-31 | |
+| Authentication — cookie + JWT (org + staff realms) | [rbac-authentication.md](plans/rbac-authentication.md) | 2026-05-31 | |
 
 
 ### Priority 2 — Shared infrastructure
