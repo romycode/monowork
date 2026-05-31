@@ -23,9 +23,13 @@ services:
     environment:
       NODE_ENV: development
       PORT: "7000"
+      # @opentelemetry/instrumentation/hook.mjs must be the first --import so the OTel ESM
+      # loader hook is registered before tsx (or anything else) loads CJS modules like pg.
+      # Without this, pg is already in the module cache by the time sdk.start() runs and
+      # PgInstrumentation cannot patch it.
       # DEP0205: register() deprecated in favour of registerHooks(), but import-in-the-middle
       # only ships async hooks which the sync-only registerHooks() API cannot accept.
-      NODE_OPTIONS: "--disable-warning=DEP0205"
+      NODE_OPTIONS: "--disable-warning=DEP0205 --import @opentelemetry/instrumentation/hook.mjs"
       DATABASE_URL: "postgres://monowork:monowork@postgres:5432/monowork"
       OTEL_SERVICE_NAME: monowork-api
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-lgtm:4318
@@ -34,7 +38,7 @@ services:
       postgres:
         condition: service_healthy
       otel-lgtm:
-        condition: service_healthy
+        condition: service_started
     restart: unless-stopped
     healthcheck:
       test:
@@ -102,12 +106,6 @@ services:
     volumes:
       - otel_lgtm_data:/data
     restart: unless-stopped
-    healthcheck:
-      test: [ "CMD-SHELL", "wget --spider -q http://localhost:3000/api/health 2>&1 || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
 
 volumes:
   postgres_data:
