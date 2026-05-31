@@ -121,13 +121,13 @@ See [`docs/conventions.md`](docs/conventions.md) for the full reference covering
 
 ## Agent harness
 
-Claude Code configuration lives in [`.claude/`](.claude/) — see [`.claude/README.md`](.claude/README.md). It defines task-specialised sub-agents (`slice-builder`, `test-author`, `code-reviewer`, `vue-frontend`, `documenter`), shared `settings.json` (permissions, env), and hooks: a PreToolUse `plan-guard` enforcing the plan-first rule on source edits, and a Stop hook that runs `just format`.
+Claude Code configuration lives in [`.claude/`](.claude/) — see [`.claude/README.md`](.claude/README.md). It defines task-specialised sub-agents (`planner`, `slice-builder`, `test-author`, `code-reviewer`, `vue-frontend`, `documenter`), shared `settings.json` (permissions, env), and hooks: a PreToolUse `plan-guard` enforcing the plan-first rule on source edits, and a Stop hook that runs `just format`.
 
 ### Orchestration protocol
 
 When the user asks for work, the primary (orchestrator) agent does **not** edit source directly — it plans, delegates to the sub-agents, and integrates their output. The standing procedure:
 
-1. **Plan & track first** — create `docs/plans/<slug>.md` and a `docs/planing.md` row (the plan-first hard rule above).
+1. **Plan & track first** — delegate to the `planner` agent to create `docs/plans/<slug>.md` and a `docs/planing.md` row (the plan-first hard rule above).
 2. **Branch first** — create one task branch named `<type>/<slug>` using a [Conventional Commits](https://www.conventionalcommits.org/) type (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`), e.g. `feat/invoices-slice`. All of the task's work lands on this branch.
 3. **Decompose & delegate** — split the task into units and route each to the right agent (`slice-builder` for API slices, `test-author` for tests, `vue-frontend` for `app/`, `documenter` for docs; `code-reviewer` last). Keep a live status checklist of every delegated unit.
 4. **One worktree per agent** — spawn each agent with the Agent tool's `isolation: "worktree"` so it works in its own git worktree. Independent working copies prevent collisions when agents run in parallel.

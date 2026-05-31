@@ -12,6 +12,7 @@ on-convention without re-explaining the rules each time.
 .claude/
 ├── settings.json          # permissions, env, hook wiring (committed, shared)
 ├── agents/                # sub-agent definitions
+│   ├── planner.md
 │   ├── slice-builder.md
 │   ├── test-author.md
 │   ├── code-reviewer.md
@@ -31,6 +32,7 @@ automatically when a task matches its `description`, or you can ask explicitly
 
 | Agent | Use it for |
 |---|---|
+| `planner` | Authoring the plan artifacts (`docs/plans/<slug>.md` + a `docs/planing.md` row) at the start of a task. Context-frugal; reads the minimum, writes no code. Runs on `opus`. |
 | `slice-builder` | A full API vertical slice (`<feature>.ts` / `.db.ts` / `.repo.ts` / `.service.ts` / `.routes.ts`) honouring the ports & adapters layering rules. |
 | `test-author` | Unit (`.service.test.ts`) and acceptance (`.routes.test.ts`) tests using `node:test`, `mock.fn`, builders, and `app.inject()`. |
 | `code-reviewer` | A read-only review of the working diff for layering, naming, import-alias, and convention violations. |
@@ -45,9 +47,11 @@ to the specialists below and folds their work back together.
 
 When the user asks for work:
 
-1. **Plan & track first.** Create `docs/plans/<slug>.md` and a `docs/planing.md`
-   row before any code (the plan-first hard rule; the `plan-guard` hook enforces
-   it on source edits).
+1. **Plan & track first.** Delegate to the `planner` agent to create
+   `docs/plans/<slug>.md` and a `docs/planing.md` row before any code (the
+   plan-first hard rule; the `plan-guard` hook enforces it on source edits). The
+   planner also proposes the branch name and the delegation breakdown for the
+   steps below.
 2. **Branch first — Conventional Commits.** Create one task branch
    `<type>/<slug>`, `<type>` ∈ `feat | fix | chore | docs | refactor | test |
    perf | build | ci`, e.g. `feat/invoices-slice`:
@@ -63,6 +67,7 @@ When the user asks for work:
 
    | Work | Agent |
    |---|---|
+   | Plan authoring (step 1) | `planner` |
    | New/changed API slice | `slice-builder` |
    | API tests | `test-author` |
    | `app/` feature (view/component/store) | `vue-frontend` |

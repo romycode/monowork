@@ -25,6 +25,7 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Add `@monowork/tracing` tests for `traced()` | [tracing-traced-tests.md](plans/tracing-traced-tests.md) | 2026-05-27 | 2026-05-31 |
 | Define Claude Code agent harness (`.claude/` agents, settings, hooks) | [agent-harness-definition.md](plans/agent-harness-definition.md) | 2026-05-31 | 2026-05-31 |
 | Define agent orchestration protocol (branch → worktree per agent → commit) | [agent-orchestration-protocol.md](plans/agent-orchestration-protocol.md) | 2026-05-31 | 2026-05-31 |
+| Add `planner` sub-agent (context-frugal plan authoring) | [planner-agent.md](plans/planner-agent.md) | 2026-05-31 | 2026-05-31 |
 
 ## Pending
 
