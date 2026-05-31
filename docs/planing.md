@@ -56,6 +56,11 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 | Add counter store unit test | [counter-store-test.md](plans/counter-store-test.md) | 2026-05-27 | |
 | User management dashboard | [user-management-dashboard.md](plans/user-management-dashboard.md) | 2026-05-30 | 2026-05-30 |
 | Base UI components + centralized CSS | [base-ui-components.md](plans/base-ui-components.md) | 2026-05-30 | 2026-05-30 |
+| Authentication — login/logout + route guard | [authentication-frontend.md](plans/authentication-frontend.md) | 2026-05-31 | |
+| App layout & navigation (sidebar, header, shell) | [app-layout-navigation.md](plans/app-layout-navigation.md) | 2026-05-31 | |
+| Organization management dashboard | [org-management-dashboard.md](plans/org-management-dashboard.md) | 2026-05-31 | |
+| Memberships management dashboard | [memberships-management-dashboard.md](plans/memberships-management-dashboard.md) | 2026-05-31 | |
+| Roles & permissions management dashboard | [roles-management-dashboard.md](plans/roles-management-dashboard.md) | 2026-05-31 | |
 
 ### Priority 4 — Project management
 
