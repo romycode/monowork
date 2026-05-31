@@ -1,7 +1,14 @@
 .git
 .gitignore
+.githooks
+.idea
 **/node_modules
 **/dist
 **/*.tsbuildinfo
 .node-version
 compose.yml
+docs
+bruno
+README.md
+AGENTS.md
+CLAUDE.md

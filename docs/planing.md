@@ -70,3 +70,9 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 | Configure coverage reporting | [coverage-reporting.md](plans/coverage-reporting.md) | 2026-05-27 | |
 | Add coverage thresholds to CI | [coverage-thresholds-ci.md](plans/coverage-thresholds-ci.md) | 2026-05-27 | |
 | Expand pre-commit hook to include acceptance tests | [expand-pre-commit-hook.md](plans/expand-pre-commit-hook.md) | 2026-05-27 | |
+
+### Priority 5 — Infrastructure
+
+| Task | Plan | Added | Completed |
+|------|------|-------|-----------|
+| Docker image optimization (follow pnpm guide) | [docker-image-optimization.md](plans/docker-image-optimization.md) | 2026-05-30 | 2026-05-30 |
