@@ -24,10 +24,13 @@ jobs:
 
       - name: Create .env
         # compose.yml declares `env_file: .env`, which is gitignored and
-        # absent on a fresh checkout. The api service reads DATABASE_URL and
-        # OTEL_* from the compose `environment:` block, so an empty file is
-        # enough to satisfy the requirement.
-        run: touch .env
+        # absent on a fresh checkout. The api/app services read DATABASE_URL
+        # and OTEL_* from the compose `environment:` block, so this file only
+        # needs to (a) satisfy the env_file requirement and (b) disable
+        # telemetry in CI. OTEL_SDK_DISABLED makes the OpenTelemetry SDK a
+        # no-op (env_file values apply since `environment:` does not set it),
+        # and the otel-lgtm observability stack is never started below.
+        run: echo "OTEL_SDK_DISABLED=true" > .env
 
       - name: Build dev image
         run: just build
@@ -42,7 +45,10 @@ jobs:
         run: docker compose run --rm --no-deps api pnpm install --frozen-lockfile
 
       - name: Start services
-        run: just start
+        # Telemetry is disabled in CI: start only the services the test run
+        # needs and skip the otel-lgtm observability stack. --no-deps stops
+        # compose from pulling otel-lgtm in via the api service's depends_on.
+        run: docker compose up -d --no-deps postgres api app
 
       - name: Wait for containers
         # typecheck and test exec into the running api/app containers. Poll
@@ -72,8 +78,15 @@ jobs:
       - name: Typecheck
         run: just typecheck
 
-      - name: Test
-        run: just test
+      - name: Test (unit + acceptance + app)
+        # Skip the DB integration tests (users.repo.test.ts): they use
+        # Testcontainers, which needs a Docker daemon the api container does
+        # not have. These suites mock the repository (api) or run in jsdom
+        # (app), so they need neither a database nor Docker-in-Docker.
+        run: |
+          just test-unit
+          just test-acceptance
+          just test-app
 
       - name: Stop services
         if: always()
