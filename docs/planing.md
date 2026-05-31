@@ -31,6 +31,7 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | User management dashboard | [user-management-dashboard.md](plans/user-management-dashboard.md) | 2026-05-30 | 2026-05-30 |
 | Base UI components + centralized CSS | [base-ui-components.md](plans/base-ui-components.md) | 2026-05-30 | 2026-05-30 |
 | Docker image optimization (follow pnpm guide) | [docker-image-optimization.md](plans/docker-image-optimization.md) | 2026-05-30 | 2026-05-30 |
+| Fix OTel traces missing in Grafana + trace_id absent from Loki logs | [fix-otel-traces-loki-traceid.md](plans/fix-otel-traces-loki-traceid.md) | 2026-05-31 | 2026-05-31 |
 
 ## Pending
 

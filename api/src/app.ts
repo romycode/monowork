@@ -7,10 +7,10 @@ import { organizationService } from '#/organizations/organizations.service'
 import { createUsersRepository } from '#/users/users.repo'
 import { usersRouter } from '#/users/users.routes'
 import { userService } from '#/users/users.service'
+import { fastifyOtelInstrumentation } from '#/otel'
 import { traced } from '@monowork/tracing/traced'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
-import { FastifyOtelInstrumentation } from '@fastify/otel'
 import rateLimit from '@fastify/rate-limit'
 import type { ZodTypeProvider } from '@fastify/type-provider-zod'
 import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
@@ -61,7 +61,7 @@ export function createApp() {
     trustProxy: parseTrustProxy(env.TRUST_PROXY),
   }).withTypeProvider<ZodTypeProvider>()
 
-  void app.register(new FastifyOtelInstrumentation().plugin())
+  void app.register(fastifyOtelInstrumentation.plugin())
 
   // --- security plugins ---
 
@@ -106,7 +106,7 @@ export function createApp() {
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
 
-  // --- error sanitisation ---
+  // --- error sanitization ---
 
   app.setErrorHandler<FastifyError>((err, req, reply) => {
     const statusCode = err.statusCode ?? 500

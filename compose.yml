@@ -34,7 +34,7 @@ services:
       postgres:
         condition: service_healthy
       otel-lgtm:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test:
@@ -93,9 +93,12 @@ services:
   otel-lgtm:
     image: grafana/otel-lgtm:latest
     ports:
-      - "7010:3000"
-      - "7011:4317"
-      - "7012:4318"
+      - "7010:3000"   # Grafana
+      - "7011:4317"   # OTLP gRPC
+      - "7012:4318"   # OTLP HTTP
+      - "7013:3200"   # Tempo
+      - "7014:4040"   # Pyroscope
+      - "7015:9090"   # Prometheus
     volumes:
       - otel_lgtm_data:/data
     restart: unless-stopped

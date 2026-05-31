@@ -51,6 +51,9 @@ just hooks          # configure git hooks (run once per clone, included in just 
 | Grafana    | 7010      |
 | OTLP gRPC  | 7011      |
 | OTLP HTTP  | 7012      |
+| Tempo      | 7013      |
+| Pyroscope  | 7014      |
+| Prometheus | 7015      |
 
 ## Architecture
 

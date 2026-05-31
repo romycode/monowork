@@ -1,4 +1,5 @@
 import { env } from '#/env'
+import { FastifyOtelInstrumentation } from '@fastify/otel'
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
@@ -17,6 +18,8 @@ import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic
 // importing the constant and coupling ourselves to something that may be renamed,
 // we set the key as a literal: an attribute is nothing more than a string.
 const ATTR_DEPLOYMENT_ENVIRONMENT_NAME = 'deployment.environment.name' as const
+
+export const fastifyOtelInstrumentation = new FastifyOtelInstrumentation()
 
 const resource = resourceFromAttributes({
   [ATTR_SERVICE_NAME]: env.OTEL_SERVICE_NAME,
@@ -42,6 +45,7 @@ const sdk = new NodeSDK({
   metricReaders: [metricReader],
   traceExporter: traceExporter,
   instrumentations: [
+    fastifyOtelInstrumentation,
     new HttpInstrumentation({
       ignoreIncomingRequestHook: (req): boolean => {
         return env.NODE_ENV !== 'development' && (req.url?.startsWith('/health') ?? false)
