@@ -71,13 +71,22 @@ src/
 ├── db/
 │   └── index.ts      # db singleton (Drizzle + node-postgres) + DB type
 └── <feature>/
-    ├── <feature>-schema.ts      # Drizzle table definition
-    ├── <feature>-repository.ts  # DB adapter (outbound port)
-    ├── <feature>-service.ts     # business logic (inbound port)
-    ├── <feature>-router.ts      # HTTP adapter — thin, delegates to service
-    ├── <feature>-service.test.ts # unit tests — mocks repository, tests service logic
-    └── <feature>-router.test.ts  # acceptance tests — mocks repository, tests HTTP contract
+    ├── <feature>.ts          # domain types — pure TS, no Drizzle imports
+    ├── <feature>.db.ts       # Drizzle table definition — no domain logic
+    ├── <feature>.repo.ts     # DB adapter (outbound port) — maps DB record → domain type
+    ├── <feature>.service.ts  # business logic (inbound port)
+    ├── <feature>.routes.ts   # HTTP adapter — thin, delegates to service
+    ├── <feature>.service.test.ts # unit tests — mocks repository, tests service logic
+    └── <feature>.routes.test.ts  # acceptance tests — mocks repository, tests HTTP contract
 ```
+
+File naming rules:
+- **Domain model** — `<feature>.ts` — explicit pure-TS types, no ORM imports. This is the only file the service and routes layers import from.
+- **DB model** — `<feature>.db.ts` — Drizzle table definition only. Imported by the repository and `drizzle.config.ts`; never by service or routes.
+- **Repository** — `<feature>.repo.ts` — the only layer that knows both the DB record shape and the domain type. Owns the mapping between them.
+- **Service** — `<feature>.service.ts`
+- **Routes** — `<feature>.routes.ts`
+- **Tests** — mirror the file under test, e.g. `<feature>.service.test.ts`, `<feature>.routes.test.ts`
 
 Layer rules:
 - **Router** knows about HTTP and the service port only. Zod schemas live here.
@@ -96,10 +105,13 @@ Vue 3 + Vite + Pinia + Vue Router. Uses `~/` as the `src/` path alias.
 
 ## Work tracking
 
+> **STOP — no code, no file edits, no shell commands until a plan exists.**
+> Every task requires a plan file at `docs/plans/<task-slug>.md` and a row in `docs/planing.md` before any implementation begins. This is a hard rule with no exceptions.
+
 All work MUST be tracked in [`docs/planing.md`](docs/planing.md). Before starting any task:
 
-1. **Before work begins** — add a row to the appropriate priority table in `docs/planing.md` with a description and today's date in the **Added** column. If the task already exists, skip this step. Also create a detailed plan file under `docs/plans/<task-slug>.md` describing the goal, scope, test cases or changes, and dependencies. Link it from the **Plan** column in the tracking table.
-2. **After work is complete** — fill in today's date in the **Completed** column for that row.
+1. **Before work begins** — create a plan file at `docs/plans/<task-slug>.md` describing the goal, scope, test cases or changes, and dependencies. Then add a row to the appropriate priority table in `docs/planing.md` with a description, a link to the plan, and today's date in the **Added** column. If the task already exists with a plan, skip this step.
+2. **After work is complete** — fill in today's date in the **Completed** column for that row, then move the row from its priority section into the **Done** table at the top.
 
 Never start implementation without recording the task and its plan first. Never leave a finished task without marking it complete.
 

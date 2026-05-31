@@ -1,7 +1,7 @@
-import type { UsersRepository } from '#/users/users-repository'
-import { usersRouter } from '#/users/users-router'
-import { userService } from '#/users/users-service'
-import { buildUser, mockRepo } from '#/users/users-test-helpers'
+import type { UsersRepository } from '#/users/users.repo'
+import { usersRouter } from '#/users/users.routes'
+import { userService } from '#/users/users.service'
+import { buildUser, mockRepo } from '#/users/users.test-helpers'
 import type { ZodTypeProvider } from '@fastify/type-provider-zod'
 import { serializerCompiler, validatorCompiler } from '@fastify/type-provider-zod'
 import Fastify from 'fastify'
@@ -79,6 +79,14 @@ describe('PUT /users/:id', () => {
       payload: { ...payload, password: 'short' },
     })
     assert.equal(res.statusCode, 400)
+  })
+
+  it('returns 404 when user is soft-deleted', async (t) => {
+    const app = buildApp({ upsert: async () => undefined })
+    t.after(() => app.close())
+    const res = await app.inject({ method: 'PUT', url: '/users/' + mockUser.id, payload })
+    assert.equal(res.statusCode, 404)
+    assert.equal(res.json<{ message: string }>().message, 'User not found')
   })
 
   it('returns 400 when a required field is missing', async (t) => {

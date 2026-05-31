@@ -1,4 +1,5 @@
-import type { User, UsersRepository } from '#/users/users-repository'
+import type { User } from '#/users/users'
+import type { UsersRepository } from '#/users/users.repo'
 import { mock } from 'node:test'
 
 export function buildUser(overrides: Partial<User> = {}): User {
