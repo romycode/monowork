@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref to save runner time.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (just + Docker)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Create .env
+        # compose.yml declares `env_file: .env`, which is gitignored and
+        # absent on a fresh checkout. The api service reads DATABASE_URL and
+        # OTEL_* from the compose `environment:` block, so an empty file is
+        # enough to satisfy the requirement.
+        run: touch .env
+
+      - name: Build dev images
+        run: just build
+
+      - name: Start services
+        run: just start
+
+      - name: Wait for containers
+        # `just test` execs into the running api and app containers. Neither
+        # has a healthcheck, so poll until both accept `exec` before testing.
+        run: |
+          for svc in api app; do
+            ok=
+            for i in $(seq 1 30); do
+              if docker compose exec -T "$svc" true 2>/dev/null; then
+                echo "$svc is ready"
+                ok=1
+                break
+              fi
+              echo "waiting for $svc... ($i)"
+              sleep 2
+            done
+            if [ -z "$ok" ]; then
+              echo "$svc did not become ready in time"
+              docker compose logs "$svc"
+              exit 1
+            fi
+          done
+
+      - name: Run tests
+        run: just test
+
+      - name: Stop services
+        if: always()
+        run: just stop
