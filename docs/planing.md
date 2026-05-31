@@ -21,6 +21,8 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Users — split domain model from database model | [users-domain-db-split.md](plans/users-domain-db-split.md) | 2026-05-31 | 2026-05-31 |
 | Rename existing files to new naming convention | [rename-to-new-convention.md](plans/rename-to-new-convention.md) | 2026-05-31 | 2026-05-31 |
 | Multitenant RBAC — architecture & design | [multitenant-rbac-design.md](plans/multitenant-rbac-design.md) | 2026-05-31 | 2026-05-31 |
+| Phase 1 — Organizations slice | [rbac-organizations.md](plans/rbac-organizations.md) | 2026-05-31 | 2026-05-31 |
+| Add `@monowork/tracing` tests for `traced()` | [tracing-traced-tests.md](plans/tracing-traced-tests.md) | 2026-05-27 | 2026-05-31 |
 
 ## Pending
 
@@ -31,7 +33,6 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
-| Phase 1 — Organizations slice | [rbac-organizations.md](plans/rbac-organizations.md) | 2026-05-31 | |
 | Phase 2 — Memberships slice | [rbac-memberships.md](plans/rbac-memberships.md) | 2026-05-31 | |
 | Phase 3 — Roles, permissions & catalog | [rbac-roles-permissions.md](plans/rbac-roles-permissions.md) | 2026-05-31 | |
 | Phase 4 — Membership ↔ roles bridge | [rbac-membership-roles.md](plans/rbac-membership-roles.md) | 2026-05-31 | |
@@ -45,7 +46,6 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
-| Add `@monowork/tracing` tests for `traced()` | [tracing-traced-tests.md](plans/tracing-traced-tests.md) | 2026-05-27 | |
 | Add `@monowork/tracing` tests for `withSpan()` | [tracing-withspan-tests.md](plans/tracing-withspan-tests.md) | 2026-05-27 | |
 | Add `@monowork/tracing` tests for helpers | [tracing-helpers-tests.md](plans/tracing-helpers-tests.md) | 2026-05-27 | |
 

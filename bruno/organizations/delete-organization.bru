@@ -1,0 +1,15 @@
+meta {
+  name: Delete Organization
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/orgs/{{orgId}}
+  body: none
+  auth: none
+}
+
+params:path {
+  orgId: 01900000-0000-7000-8000-000000000001
+}

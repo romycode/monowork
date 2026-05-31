@@ -1,0 +1,15 @@
+meta {
+  name: Get Organization
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/orgs/{{org-id}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  org-id: 01900000-0000-7000-8000-000000000001
+}
