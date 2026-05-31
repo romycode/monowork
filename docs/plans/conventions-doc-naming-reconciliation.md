@@ -2,7 +2,8 @@
 
 **Priority:** 4 — Project management
 **Added:** 2026-05-31
-**Status:** Pending
+**Completed:** 2026-05-31
+**Status:** Done
 
 ## Goal
 

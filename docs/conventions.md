@@ -52,13 +52,14 @@ api/
 │   │   ├── index.ts          # Drizzle db singleton and DB type
 │   │   └── seed.ts           # Dev seed script
 │   └── <feature>/
-│       ├── <feature>-schema.ts      # Drizzle table definition
-│       ├── <feature>-repository.ts  # DB adapter (outbound port)
-│       ├── <feature>-service.ts     # Business logic (inbound port)
-│       ├── <feature>-router.ts      # HTTP adapter — thin, delegates to service
-│       ├── <feature>-service.test.ts # Unit tests — mocks repository, tests service logic
-│       ├── <feature>-router.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
-│       └── <feature>-test-helpers.ts # Builders + mockRepo (excluded from production build)
+│       ├── <feature>.ts             # Domain model — pure TS types, no Drizzle imports
+│       ├── <feature>.db.ts          # Drizzle table definition
+│       ├── <feature>.repo.ts        # DB adapter (outbound port)
+│       ├── <feature>.service.ts     # Business logic (inbound port)
+│       ├── <feature>.routes.ts      # HTTP adapter — thin, delegates to service
+│       ├── <feature>.service.test.ts # Unit tests — mocks repository, tests service logic
+│       ├── <feature>.routes.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
+│       └── <feature>.test-helpers.ts # Builders + mockRepo (excluded from production build)
 ├── drizzle.config.ts
 ├── tsconfig.json
 ├── tsconfig.build.json       # Excludes tests/seed from production build
@@ -117,7 +118,7 @@ Run `just lint` to check, `just lint-fix` to autofix.
 
 | Subject | Convention | Example |
 |---|---|---|
-| Files | kebab-case | `users-repository.ts` |
+| Files | kebab-case with a dot-separated layer suffix | `users.repo.ts` |
 | Functions | camelCase | `createApp`, `findById` |
 | Variables & constants | camelCase | `db`, `env`, `mockUser` |
 | Types & exported schemas | PascalCase for types; camelCase for Zod schemas | `UsersRepository`, `userSchema` |
@@ -159,7 +160,7 @@ For workspace packages, use subpath exports in `package.json` to expose each mod
 
 ```ts
 // api/ — correct
-import type { UsersService } from '#/users/users-service'
+import type { UsersService } from '#/users/users.service'
 import { createApp } from '#/app'
 import { env } from '#/env'
 import Fastify from 'fastify'
@@ -211,10 +212,11 @@ Each feature is a self-contained directory under `src/<feature>/`. The layers wi
 
 | Layer | File | May depend on |
 |---|---|---|
-| HTTP adapter | `<feature>-router.ts` | Service port, Zod, Fastify |
-| Service (inbound port) | `<feature>-service.ts` | Repository port, domain types |
-| DB adapter (outbound port) | `<feature>-repository.ts` | Drizzle, `db` singleton |
-| Schema | `<feature>-schema.ts` | Drizzle table helpers |
+| HTTP adapter | `<feature>.routes.ts` | Service port, Zod, Fastify |
+| Service (inbound port) | `<feature>.service.ts` | Repository port, domain types |
+| DB adapter (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain model |
+| DB model | `<feature>.db.ts` | Drizzle table helpers |
+| Domain model | `<feature>.ts` | Pure TS — no Drizzle |
 
 No layer may skip levels (e.g. a router must not call the repository directly).
 
@@ -239,7 +241,7 @@ Exports one named constant typed as `FastifyPluginAsyncZod`. Zod schemas live he
 
 ```ts
 import type { FastifyPluginAsyncZod } from '@fastify/type-provider-zod'
-import type { ItemsService } from '#/items/items-service'
+import type { ItemsService } from '#/items/items.service'
 import { z } from 'zod'
 
 const itemSchema = z.object({ id: z.uuid(), name: z.string() })
@@ -255,21 +257,21 @@ export const itemsRouter: FastifyPluginAsyncZod<Options> = async (fastify, { ser
 
 - The type provider (`@fastify/type-provider-zod`) derives all handler types automatically. Do not annotate `req` or `reply` manually.
 - Register with `void app.register(...)`. The `void` prefix prevents floating-promise lint warnings.
-- Pass the service via plugin options: `void app.register(itemsRouter, { service: createItemsService(repo) })`
+- Pass the service via plugin options: `void app.register(itemsRouter, { service: itemsService(repo) })`
 
 ### Service
 
 Contains business logic. Receives domain inputs, returns domain objects, delegates persistence to the repository port. Use a factory function — not a class.
 
 ```ts
-import type { ItemsRepository, Item } from '#/items/items-repository'
+import type { ItemsRepository, Item } from '#/items/items.repo'
 
 export type ItemsService = {
   list: () => Promise<Item[]>
   // ...
 }
 
-export function createItemsService(repo: ItemsRepository): ItemsService {
+export function itemsService(repo: ItemsRepository): ItemsService {
   return {
     list: () => repo.findAll(),
     // ...
@@ -299,7 +301,7 @@ export function createItemsRepository(db: DB): ItemsRepository {
 
 ### Schema
 
-Drizzle `pgTable` definition. Use camelCase for TypeScript properties and snake_case for SQL column names. The Drizzle config uses a glob (`./src/**/*-schema.ts`) so new schemas are picked up automatically.
+Drizzle `pgTable` definition. Use camelCase for TypeScript properties and snake_case for SQL column names. The Drizzle config uses a glob (`./src/**/*.db.ts`) so new schemas are picked up automatically.
 
 ```ts
 export const items = pgTable('items', {
@@ -358,17 +360,17 @@ Each feature slice has two test files:
 
 | File | Kind | Mocks | What it tests |
 |---|---|---|---|
-| `<feature>-service.test.ts` | Unit | `<Feature>Repository` | Business logic in isolation |
-| `<feature>-router.test.ts` | Acceptance | `<Feature>Repository` | Full HTTP contract: router + real service |
+| `<feature>.service.test.ts` | Unit | `<Feature>Repository` | Business logic in isolation |
+| `<feature>.routes.test.ts` | Acceptance | `<Feature>Repository` | Full HTTP contract: router + real service |
 
 **Both test kinds mock at the repository boundary** — the infrastructure edge. The difference is the entry point: unit tests call service methods directly; acceptance tests send HTTP requests and exercise the service for real.
 
 #### Domain object builders
 
-Each feature exposes a `<feature>-test-helpers.ts` file (excluded from the production build) with builder functions for domain objects. Builders provide valid defaults and accept partial overrides, keeping tests focused on what varies.
+Each feature exposes a `<feature>.test-helpers.ts` file (excluded from the production build) with builder functions for domain objects. Builders provide valid defaults and accept partial overrides, keeping tests focused on what varies.
 
 ```ts
-// users-test-helpers.ts
+// users.test-helpers.ts
 export function buildUser(overrides: Partial<User> = {}): User {
   return {
     id: '00000000-0000-4000-8000-000000000001',
@@ -403,7 +405,7 @@ export function mockRepo(overrides: Partial<UsersRepository> = {}): UsersReposit
 }
 ```
 
-#### Unit tests (`<feature>-service.test.ts`)
+#### Unit tests (`<feature>.service.test.ts`)
 
 Call service methods directly with a mocked repository. Focus on what the service *does*, not HTTP.
 
@@ -416,7 +418,7 @@ describe('UsersService.get', () => {
 })
 ```
 
-#### Acceptance tests (`<feature>-router.test.ts`)
+#### Acceptance tests (`<feature>.routes.test.ts`)
 
 Build a minimal Fastify app with the real service wired to a mocked repository. Never import `createApp()` — register only the router under test.
 
