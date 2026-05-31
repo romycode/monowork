@@ -1,6 +1,9 @@
 import { db } from '#/db/index'
 import { env } from '#/env'
 import { healthRouter } from '#/health/health-router'
+import { createOrganizationsRepository } from '#/organizations/organizations.repo'
+import { organizationsRouter } from '#/organizations/organizations.routes'
+import { organizationService } from '#/organizations/organizations.service'
 import { createUsersRepository } from '#/users/users.repo'
 import { usersRouter } from '#/users/users.routes'
 import { userService } from '#/users/users.service'
@@ -171,6 +174,10 @@ export function createApp() {
   const usersRepo = traced(createUsersRepository(db), 'UsersRepository')
   const usersService = traced(userService(usersRepo), 'UsersService')
   void app.register(usersRouter, { usersService })
+
+  const orgsRepo = traced(createOrganizationsRepository(db), 'OrganizationsRepository')
+  const orgsService = traced(organizationService(orgsRepo), 'OrganizationsService')
+  void app.register(organizationsRouter, { organizationsService: orgsService })
 
   return app
 }

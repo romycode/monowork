@@ -1,0 +1,21 @@
+meta {
+  name: Update Organization
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/orgs/{{orgId}}
+  body: json
+  auth: none
+}
+
+params:path {
+  orgId: 01900000-0000-7000-8000-000000000001
+}
+
+body:json {
+  {
+    "name": "Acme Inc"
+  }
+}
