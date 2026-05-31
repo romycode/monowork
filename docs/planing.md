@@ -23,6 +23,9 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Multitenant RBAC — architecture & design | [multitenant-rbac-design.md](plans/multitenant-rbac-design.md) | 2026-05-31 | 2026-05-31 |
 | Phase 1 — Organizations slice | [rbac-organizations.md](plans/rbac-organizations.md) | 2026-05-31 | 2026-05-31 |
 | Add `@monowork/tracing` tests for `traced()` | [tracing-traced-tests.md](plans/tracing-traced-tests.md) | 2026-05-27 | 2026-05-31 |
+| Define Claude Code agent harness (`.claude/` agents, settings, hooks) | [agent-harness-definition.md](plans/agent-harness-definition.md) | 2026-05-31 | 2026-05-31 |
+| Define agent orchestration protocol (branch → worktree per agent → commit) | [agent-orchestration-protocol.md](plans/agent-orchestration-protocol.md) | 2026-05-31 | 2026-05-31 |
+| Add `planner` sub-agent (context-frugal plan authoring) | [planner-agent.md](plans/planner-agent.md) | 2026-05-31 | 2026-05-31 |
 
 ## Pending
 
@@ -66,6 +69,7 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
+| Reconcile `docs/conventions.md` with the dot-name slice convention | [conventions-doc-naming-reconciliation.md](plans/conventions-doc-naming-reconciliation.md) | 2026-05-31 | |
 | Add GitHub Actions CI workflow | [github-actions-ci.md](plans/github-actions-ci.md) | 2026-05-27 | |
 | Configure coverage reporting | [coverage-reporting.md](plans/coverage-reporting.md) | 2026-05-27 | |
 | Add coverage thresholds to CI | [coverage-thresholds-ci.md](plans/coverage-thresholds-ci.md) | 2026-05-27 | |
