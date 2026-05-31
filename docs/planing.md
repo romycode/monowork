@@ -69,6 +69,7 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
+| Reconcile `docs/conventions.md` with the dot-name slice convention | [conventions-doc-naming-reconciliation.md](plans/conventions-doc-naming-reconciliation.md) | 2026-05-31 | |
 | Add GitHub Actions CI workflow | [github-actions-ci.md](plans/github-actions-ci.md) | 2026-05-27 | |
 | Configure coverage reporting | [coverage-reporting.md](plans/coverage-reporting.md) | 2026-05-27 | |
 | Add coverage thresholds to CI | [coverage-thresholds-ci.md](plans/coverage-thresholds-ci.md) | 2026-05-27 | |

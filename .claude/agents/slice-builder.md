@@ -57,8 +57,11 @@ explicitly asked.
   never relative cross-directory paths, never a `.ts` extension. Use
   `import type` for type-only imports.
 - **No barrel files** — import every module by its specific path.
-- **Factories, not classes** — `export function create<Feature>Service(repo)` /
-  `create<Feature>Repository(db)` returning an object typed by an exported `type`.
+- **Factories, not classes** — note the asymmetric naming used in `users/`:
+  the **service** factory is bare, `export function <feature>Service(repo)`
+  (e.g. `userService`), while the **repository** factory keeps the prefix,
+  `export function create<Feature>Repository(db)` (e.g. `createUsersRepository`).
+  Each returns an object typed by an exported `type` port.
 - **Types over interfaces.** TypeScript 6 strict mode with
   `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
   `noPropertyAccessFromIndexSignature`, `noUnusedLocals/Parameters` — write to satisfy them.
@@ -81,16 +84,26 @@ explicitly asked.
 
 ## Router shape
 
-Export one named constant typed `FastifyPluginAsyncZod`. Zod schemas inline at
-module top. Receive the service via plugin options; register with
-`void app.register(<feature>Router, { service })`. Don't annotate `req`/`reply`
-— the Zod type provider derives them.
+Export one named constant `<feature>Router` (e.g. `usersRouter`) typed
+`FastifyPluginAsyncZod`, living in `<feature>.routes.ts`. Zod schemas inline at
+module top. Receive the service via a named plugin option keyed by the service
+name; register with `void app.register(<feature>Router, { <feature>Service })`.
+Don't annotate `req`/`reply` — the Zod type provider derives them.
 
 ## Wiring
 
-After building the slice, wire its router in `api/src/app.ts` with
-`void app.register(...)`, passing a service built from a repository over the
-`db` singleton. If the feature adds HTTP endpoints, also add Bruno requests
+After building the slice, wire it in `api/src/app.ts`: build the repository over
+the `db` singleton and the service over the repository, each wrapped with
+`traced(...)` for observability, then register the router. Mirror the existing
+users wiring exactly:
+
+```ts
+const usersRepo = traced(createUsersRepository(db), 'UsersRepository')
+const usersService = traced(userService(usersRepo), 'UsersService')
+void app.register(usersRouter, { usersService })
+```
+
+If the feature adds HTTP endpoints, also add Bruno requests
 under `bruno/<feature>/` (one kebab-case `.bru` per endpoint).
 
 ## Workflow

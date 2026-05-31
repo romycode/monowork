@@ -62,7 +62,7 @@ Call service methods directly with a mocked repo. Focus on what the service
 ```ts
 describe('UsersService.get', () => {
   it('returns undefined when not found', async () => {
-    const service = createUsersService(mockRepo({ findById: async () => undefined }))
+    const service = userService(mockRepo({ findById: async () => undefined }))
     assert.equal(await service.get('non-existent'), undefined)
   })
 })
@@ -75,11 +75,11 @@ real service over a mocked repo. **Never import `createApp()`.**
 
 ```ts
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
-  const service = createUsersService(mockRepo(repoOverrides))
+  const service = userService(mockRepo(repoOverrides))
   const app = Fastify({ logger: false }).withTypeProvider<ZodTypeProvider>()
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
-  void app.register(usersRouter, { service })
+  void app.register(usersRouter, { usersService: service })
   return app
 }
 ```

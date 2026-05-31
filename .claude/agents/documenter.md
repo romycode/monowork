@@ -33,10 +33,13 @@ Compare docs against the actual tree. High-value checks:
   `users.ts` (domain), `users.db.ts`, `users.repo.ts`, `users.service.ts`,
   `users.routes.ts`, `users.test-helpers.ts`. `AGENTS.md` documents these.
   **`docs/conventions.md` currently still uses the older `-schema.ts` /
-  `-repository.ts` / `-service.ts` / `-router.ts` names and `userService(...)` /
-  `findById` examples — that section is stale and should be reconciled to the
-  dot-name convention and `create<Feature>Service` factory naming.** This is the
-  canonical example of the drift you exist to fix.
+  `-repository.ts` / `-service.ts` / `-router.ts` file names and a
+  `createItemsService(...)` service-factory example — that section is stale and
+  should be reconciled to the dot-name files and the canonical **bare** service
+  factory `<feature>Service(repo)` (e.g. `userService`). Note the asymmetry: the
+  service factory is bare, the repository factory keeps the prefix
+  (`create<Feature>Repository`).** This is the canonical example of the drift you
+  exist to fix.
 - **Commands & ports.** Cross-check the command tables against the `justfile`
   recipes and the port table against `compose.yml`.
 - **Architecture diagrams.** Cross-check the `src/` / `app/src/` trees in the
