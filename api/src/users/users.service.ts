@@ -11,7 +11,10 @@ type UpdateUserInput = {
 export type UsersService = {
   list: () => Promise<User[]>
   get: (id: string) => Promise<User | undefined>
-  upsert: (id: string, input: UpsertUserInput) => Promise<{ user: User; created: boolean } | undefined>
+  upsert: (
+    id: string,
+    input: UpsertUserInput,
+  ) => Promise<{ user: User; created: boolean } | undefined>
   update: (id: string, input: UpdateUserInput) => Promise<User | undefined>
   remove: (id: string) => Promise<User | undefined>
 }

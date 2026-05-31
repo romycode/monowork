@@ -79,7 +79,10 @@ describe('UsersRepository.upsert', () => {
   it('returns undefined when the id belongs to a soft-deleted user', async () => {
     const user = await insertUser()
     await repo.remove(user.id)
-    assert.equal(await repo.upsert(user.id, { email: user.email, name: user.name, password: 'password123' }), undefined)
+    assert.equal(
+      await repo.upsert(user.id, { email: user.email, name: user.name, password: 'password123' }),
+      undefined,
+    )
   })
 })
 
