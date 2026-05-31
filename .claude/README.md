@@ -37,6 +37,66 @@ automatically when a task matches its `description`, or you can ask explicitly
 | `vue-frontend` | `app/` features — Vue 3 + Pinia + Vue Router, base UI components, scoped styles, vitest + Testing Library. |
 | `documenter` | Bringing docs back in line with the code and flagging drift. Touches docs only. |
 
+## Orchestration protocol
+
+How the **primary (orchestrator) agent** drives the sub-agents. The orchestrator
+plans and integrates — it does not edit application source itself; it delegates
+to the specialists below and folds their work back together.
+
+When the user asks for work:
+
+1. **Plan & track first.** Create `docs/plans/<slug>.md` and a `docs/planing.md`
+   row before any code (the plan-first hard rule; the `plan-guard` hook enforces
+   it on source edits).
+2. **Branch first — Conventional Commits.** Create one task branch
+   `<type>/<slug>`, `<type>` ∈ `feat | fix | chore | docs | refactor | test |
+   perf | build | ci`, e.g. `feat/invoices-slice`:
+
+   ```sh
+   git switch -c feat/<slug>
+   ```
+
+   All of the task's work lands on this single branch.
+3. **Decompose & delegate.** Split the task into units and route each to the
+   agent whose `description` fits. Maintain a live checklist (one entry per unit:
+   pending → in-progress → done) so progress is visible.
+
+   | Work | Agent |
+   |---|---|
+   | New/changed API slice | `slice-builder` |
+   | API tests | `test-author` |
+   | `app/` feature (view/component/store) | `vue-frontend` |
+   | Doc updates / drift reconciliation | `documenter` |
+   | Final diff review | `code-reviewer` |
+
+4. **One worktree per agent.** Spawn each agent with the Agent tool's
+   `isolation: "worktree"`. Each then operates in its **own git worktree** — an
+   independent working copy backed by the same repository — so parallel agents
+   never collide on the same files. Give each a precise, self-contained brief
+   (which slice/files, which conventions, expected outputs).
+5. **Commit each finished worktree to the branch.** When an agent reports done,
+   review its output, then integrate its worktree changes onto the task branch
+   with a Conventional Commits message and clean the worktree up. Integrate in a
+   deterministic order (e.g. slice → tests → frontend → docs) and resolve any
+   overlap as you go:
+
+   ```sh
+   git -C <worktree> add -A
+   git -C <worktree> commit -m "<type>(scope): subject"
+   # bring the commit onto the task branch, then remove the worktree
+   git cherry-pick <sha>          # or merge the worktree's temp branch
+   git worktree remove <worktree>
+   ```
+
+   > Git won't check the *same* branch out in two worktrees at once, so each
+   > agent's worktree carries its own temp branch / detached HEAD; integration
+   > means landing those commits onto the one task branch — not sharing a
+   > checkout.
+6. **Review & finish.** Run `code-reviewer` over the assembled diff, run
+   `just lint` / `just typecheck` / `just test` (services up), fill the
+   `Completed` date and move the planing row to **Done**. **Push or open a PR
+   only when the user asks.**
+
 ## Settings (`settings.json`)
 
 - **permissions** — pre-allows `just *` and read-only git so routine commands
