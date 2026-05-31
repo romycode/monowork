@@ -1,5 +1,5 @@
-import { userService } from '#/users/users-service'
-import { buildUser, mockRepo } from '#/users/users-test-helpers'
+import { userService } from '#/users/users.service'
+import { buildUser, mockRepo } from '#/users/users.test-helpers'
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
@@ -37,6 +37,11 @@ describe('UsersService.upsert', () => {
     const user = buildUser()
     const service = userService(mockRepo({ upsert: async () => ({ user, created: false }) }))
     assert.deepEqual(await service.upsert(user.id, input), { user, created: false })
+  })
+
+  it('returns undefined when the user is soft-deleted', async () => {
+    const service = userService(mockRepo({ upsert: async () => undefined }))
+    assert.equal(await service.upsert('deleted-id', input), undefined)
   })
 })
 

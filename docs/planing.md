@@ -12,22 +12,17 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Users router — acceptance tests (12 tests) | — | pre-existing | pre-existing |
 | Users repository — integration tests (8 tests) | — | pre-existing | pre-existing |
 | Health router — acceptance test (1 test) | — | pre-existing | pre-existing |
-
-## Pending
-
-### Priority 0 — Security
-
-| Task | Plan | Added | Completed |
-|------|------|-------|-----------|
 | API security hardening (helmet, cors, rate-limit, under-pressure, error sanitisation) | [api-security-hardening.md](plans/api-security-hardening.md) | 2026-05-27 | 2026-05-27 |
-
-### Priority 1 — Quick wins
-
-| Task | Plan | Added | Completed |
-|------|------|-------|-----------|
 | Add `env.ts` unit tests | [env-unit-tests.md](plans/env-unit-tests.md) | 2026-05-27 | 2026-05-27 |
 | Add `test` script to `app/package.json` | [app-test-script.md](plans/app-test-script.md) | 2026-05-27 | 2026-05-27 |
 | Wire app tests into `just test` in the justfile | [wire-app-tests-justfile.md](plans/wire-app-tests-justfile.md) | 2026-05-27 | 2026-05-27 |
+| Users — soft delete (`deleted_at`) | [users-soft-delete.md](plans/users-soft-delete.md) | 2026-05-28 | 2026-05-28 |
+| Users — guard mutations against soft-deleted records | [users-soft-delete-guard-mutations.md](plans/users-soft-delete-guard-mutations.md) | 2026-05-31 | 2026-05-31 |
+| Users — split domain model from database model | [users-domain-db-split.md](plans/users-domain-db-split.md) | 2026-05-31 | 2026-05-31 |
+| Rename existing files to new naming convention | [rename-to-new-convention.md](plans/rename-to-new-convention.md) | 2026-05-31 | 2026-05-31 |
+
+## Pending
+
 
 ### Priority 2 — Shared infrastructure
 

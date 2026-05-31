@@ -1,6 +1,6 @@
 import { db } from '#/db/index'
-import { createUsersRepository } from '#/users/users-repository'
-import { users } from '#/users/users-schema'
+import { createUsersRepository } from '#/users/users.repo'
+import { users } from '#/users/users.db'
 import assert from 'node:assert/strict'
 import { randomUUIDv7 } from 'node:crypto'
 import { after, beforeEach, describe, it } from 'node:test'
@@ -17,12 +17,13 @@ after(async () => {
 
 async function insertUser(overrides: Partial<{ email: string; name: string }> = {}) {
   const id = randomUUIDv7()
-  const { user } = await repo.upsert(id, {
+  const result = await repo.upsert(id, {
     email: overrides.email ?? `user-${id}@example.com`,
     name: overrides.name ?? 'Alice',
     password: 'password123',
   })
-  return user
+  if (!result) throw new Error('insertUser: upsert returned undefined')
+  return result.user
 }
 
 describe('UsersRepository.findAll', () => {
@@ -69,9 +70,16 @@ describe('UsersRepository.upsert', () => {
     const id = randomUUIDv7()
     const input = { email: 'alice@example.com', name: 'Alice', password: 'password123' }
     await repo.upsert(id, input)
-    const { user, created } = await repo.upsert(id, input)
-    assert.equal(created, false)
-    assert.equal(user.id, id)
+    const result = await repo.upsert(id, input)
+    assert.ok(result)
+    assert.equal(result.created, false)
+    assert.equal(result.user.id, id)
+  })
+
+  it('returns undefined when the id belongs to a soft-deleted user', async () => {
+    const user = await insertUser()
+    await repo.remove(user.id)
+    assert.equal(await repo.upsert(user.id, { email: user.email, name: user.name, password: 'password123' }), undefined)
   })
 })
 
@@ -86,6 +94,12 @@ describe('UsersRepository.update', () => {
 
   it('returns undefined when the user does not exist', async () => {
     assert.equal(await repo.update(randomUUIDv7(), { name: 'Nobody' }), undefined)
+  })
+
+  it('returns undefined when the user is soft-deleted', async () => {
+    const user = await insertUser()
+    await repo.remove(user.id)
+    assert.equal(await repo.update(user.id, { name: 'Ghost' }), undefined)
   })
 })
 

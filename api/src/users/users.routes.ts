@@ -1,4 +1,4 @@
-import type { UsersService } from '#/users/users-service'
+import type { UsersService } from '#/users/users.service'
 import type { FastifyPluginAsyncZod } from '@fastify/type-provider-zod'
 import { z } from 'zod'
 
@@ -37,8 +37,9 @@ export const usersRouter: FastifyPluginAsyncZod<Options> = async (fastify, { use
       },
     },
     async (req, reply) => {
-      const { user, created } = await usersService.upsert(req.params.id, req.body)
-      return reply.code(created ? 201 : 200).send(user)
+      const result = await usersService.upsert(req.params.id, req.body)
+      if (!result) return reply.code(404).send({ message: 'User not found' })
+      return reply.code(result.created ? 201 : 200).send(result.user)
     },
   )
 
