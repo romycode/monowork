@@ -1,6 +1,6 @@
 import { db } from '#/db/index'
 import { env } from '#/env'
-import { healthRouter } from '#/health/health-router'
+import { healthRouter } from '#/health/health.routes'
 import { createOrganizationsRepository } from '#/organizations/organizations.repo'
 import { organizationsRouter } from '#/organizations/organizations.routes'
 import { organizationService } from '#/organizations/organizations.service'

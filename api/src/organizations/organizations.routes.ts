@@ -29,10 +29,8 @@ export const organizationsRouter: FastifyPluginAsyncZod<Options> = async (
   fastify,
   { organizationsService },
 ) => {
-  fastify.get(
-    '/orgs',
-    { schema: { response: { 200: z.array(organizationSchema) } } },
-    async () => organizationsService.list(),
+  fastify.get('/orgs', { schema: { response: { 200: z.array(organizationSchema) } } }, async () =>
+    organizationsService.list(),
   )
 
   fastify.get(
