@@ -161,14 +161,27 @@ changes, or a role's permissions change.
 
 ---
 
-## 5. Staff / platform layer
+## 5. API surfaces
 
-Two authorization surfaces = two route trees:
+One deployable API serves two distinct audiences behind two route trees. They share the same
+`can()` core (§4) but authenticate via **separate sessions** (§7).
 
-| Tree | Operates on | Authorization |
-|------|-------------|---------------|
-| `/admin/*` | the **platform** (suspend org, issue refund) | staff permissions only; org membership irrelevant |
-| `/orgs/:id/*` | **product**, inside one org | normal org-scoped check |
+| Surface | Route tree | Audience | Authorization |
+|---------|-----------|----------|---------------|
+| **Internal (staff) API** | `/internal/*` | platform staff — support, ops/billing, superadmin | staff permissions only; org membership irrelevant |
+| **Organization API** | `/orgs/:orgId/*` | an organization's own members | normal org-scoped permission check |
+
+**"Admin" is overloaded — keep the two apart:**
+- **Platform staff / superadmin** operate the *platform* and live on the **internal** API.
+  They are our own people; their reach can cross every org (audited — §5.2, §6).
+- An organization's **own admin** is just an **org role** — a bag of permissions such as
+  `member.manage` + `billing.manage` — on the **organization** API, sitting alongside that
+  org's regular users (editor / viewer / …). It has no reach outside its own org.
+
+Both surfaces are authenticated by JWT-in-cookie, but with separate session realms and
+separate cookies so an org-user session can never authenticate an internal call (§7).
+
+### 5.1 Staff / platform layer
 
 - `is_staff` is a **cheap gate** so the 99.99% of traffic never touches the staff tables. By
   itself it authorizes nothing — real authorization is still permission-by-permission via
@@ -176,7 +189,7 @@ Two authorization surfaces = two route trees:
 - Expect several levels, not one superadmin: **support** (read-only), **ops/billing**,
   **superadmin** (all). Least privilege: many support, very few superadmin.
 
-### 5.1 Staff into org data
+### 5.2 Staff into org data
 
 1. **Bypass / god-mode** — has the permission, passes ignoring membership. Simple, hard to
    audit. Acceptable in V1 **only for read-only support permissions**.
@@ -188,7 +201,8 @@ Two authorization surfaces = two route trees:
 
 ## 6. Non-negotiables for staff (highest-value attack surface)
 
-- **2FA / SSO mandatory**, ideally a login separate from the normal one.
+- **2FA / SSO mandatory**, on a login separate from the normal one — realized by the separate
+  staff session realm in §7 (`POST /internal/auth/login`).
 - **Audit log** of every action: who, what, which org, when, and — for support — *why*
   (reason field). Impersonation double-logs: actor + impersonator.
 - **Just-in-time elevation:** not a permanent superadmin; elevate for N minutes with a
@@ -197,22 +211,32 @@ Two authorization surfaces = two route trees:
 
 ---
 
-## 7. Authentication assumption (out of scope here)
+## 7. Authentication (cookie + JWT)
 
-The spec assumes a logged-in user on each request. Real login (password verification,
-sessions/JWT, 2FA) is **out of scope for this branch**. The authz work depends only on a
-small contract:
+Authorization (`can()`) only needs `request.currentUser = { id, isStaff }`. **Authentication**
+is the layer that proves who that user is and populates it. It is specified in
+[rbac-authentication.md](rbac-authentication.md) and uses a **signed JWT carried in an
+HttpOnly cookie** for both surfaces, with **two separate session realms**:
 
-```ts
-// request.currentUser, populated by an onRequest hook.
-type CurrentUser = { id: string; isStaff: boolean }
-```
+| Realm | Cookie | Login surface | Populates `currentUser` for |
+|-------|--------|---------------|------------------------------|
+| Organization users (the `app/` client) | `__Host-session`, path `/` | `POST /auth/login` | `/orgs/:orgId/*` |
+| Platform staff (internal API) | `__Host-staff`, path `/internal` | `POST /internal/auth/login` (separate, 2FA-gated) | `/internal/*` (`isStaff: true`) |
 
-Phase 5 ships this as a **stub** (e.g. a dev hook reading a header / fixed user) so the
-permission-resolution machinery is fully testable. Swapping the stub for a real auth plugin
-later does not touch the resolution code. The `users.password` column is renamed to
-`password_hash` to stop implying plaintext, but hashing itself rides with the future auth
-work.
+**Why two cookies, not one:** the staff session is the highest-value target (§6), so it gets a
+separate login, a shorter lifetime, and is **path-scoped** so the browser only ever sends it
+to `/internal/*`. An org-user cookie can never authenticate an internal call, and vice-versa.
+
+**Token/cookie properties (both realms):** `HttpOnly`, `Secure`, `SameSite=Lax`, `__Host-`
+prefix; a short-lived signed **access JWT** (HS256 via `AUTH_JWT_SECRET`; asymmetric later)
+plus a **rotating refresh token** backed by a server-side `sessions` table for revocation.
+Passwords are stored argon2-hashed (`users.password_hash`). Because auth rides on cookies,
+CSRF defense is in scope (`SameSite=Lax` + a custom-header / double-submit check).
+
+**Interim:** until the authentication plan lands, **phase 5 ships a stub** — an `onRequest`
+hook reading a dev header — so the resolver and guard are testable. The contract
+(`request.currentUser`) is identical, so swapping the stub for the real auth plugin touches
+no resolution code.
 
 ---
 
@@ -228,8 +252,14 @@ first (phases 1–5); the staff layer (6–7) layers on top.
 | 3 | [rbac-roles-permissions.md](rbac-roles-permissions.md) | `roles`, `permissions`, `role_permissions` + seeded catalog. |
 | 4 | [rbac-membership-roles.md](rbac-membership-roles.md) | Assign/revoke roles on a membership (`membership_roles`). |
 | 5 | [rbac-authz-resolution.md](rbac-authz-resolution.md) | `can()` resolver, `requirePermission` guard, org-context + current-user stub, 404/403 semantics, cache. |
-| 6 | [rbac-staff-platform.md](rbac-staff-platform.md) | Staff tables, `is_staff` gate, `/admin` tree, staff short-circuit, first-superadmin seed. |
+| 6 | [rbac-staff-platform.md](rbac-staff-platform.md) | Staff tables, `is_staff` gate, `/internal` tree, staff short-circuit, first-superadmin seed. |
 | 7 | [rbac-staff-impersonation-audit.md](rbac-staff-impersonation-audit.md) | Impersonation, audit log, support read grants, JIT elevation. |
+| Auth | [rbac-authentication.md](rbac-authentication.md) | Cookie + JWT login/logout/refresh for both realms (org + staff), server-side sessions, password hashing; replaces the phase-5 stub. |
+
+**Authentication is foundational, not last.** The org-user realm can land alongside phase 5
+(replacing its stub); the staff realm depends on phase 6 (`is_staff`, the `/internal` tree);
+mandatory staff 2FA ties into phase 7. It is listed after the others only because the
+org-scoped model is shippable behind the stub without it.
 
 ---
 

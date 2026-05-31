@@ -18,7 +18,7 @@ none of this is optional (design §6).
 `record({ actor, impersonator?, action, org?, target, reason? })`. Called by:
 - the support read-grant branch of `can()`,
 - impersonation start/stop,
-- every `/admin` mutating action.
+- every `/internal` mutating action.
 Double-logs impersonation: actor (the org identity acted as) + impersonator (real staff).
 
 ### New: `api/src/staff/support-grants.db.ts` + service
@@ -50,10 +50,10 @@ for a bounded window (a `user_staff_roles` row with an `expiresAt`, or a paralle
 radius of a compromised account.
 
 ### Routes (admin tree)
-- `POST /admin/orgs/:id/support-grants` (`support.grant`) — open a read grant with reason.
-- `POST /admin/impersonations` / `DELETE /admin/impersonations/:id` — start/stop, reasoned.
-- `POST /admin/elevations` — JIT elevation with reason + TTL.
-- `GET /admin/audit-log` (`audit.read`) — read the trail.
+- `POST /internal/orgs/:id/support-grants` (`support.grant`) — open a read grant with reason.
+- `POST /internal/impersonations` / `DELETE /internal/impersonations/:id` — start/stop, reasoned.
+- `POST /internal/elevations` — JIT elevation with reason + TTL.
+- `GET /internal/audit-log` (`audit.read`) — read the trail.
 All guarded by `requireStaffPermission` and recorded to `audit_log`.
 
 ### Tests
@@ -62,7 +62,7 @@ All guarded by `requireStaffPermission` and recorded to `audit_log`.
 - Extend `authz.service.test.ts`: active read grant allows read, denies write, expired denies.
 
 ### Database & Bruno
-- `just db-generate` / `just db-migrate`. Bruno under `bruno/admin/` for grants,
+- `just db-generate` / `just db-migrate`. Bruno under `bruno/internal/` for grants,
   impersonation, elevation, audit.
 
 ## Out of scope (acknowledged future work)
@@ -72,5 +72,5 @@ All guarded by `requireStaffPermission` and recorded to `audit_log`.
   append-only table.
 
 ## Dependencies
-- [[rbac-staff-platform]] (staff roles/permissions, `/admin` tree, `requireStaffPermission`),
+- [[rbac-staff-platform]] (staff roles/permissions, `/internal` tree, `requireStaffPermission`),
   [[rbac-authz-resolution]] (the `can()` support branch and guard).

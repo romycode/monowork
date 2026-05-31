@@ -38,6 +38,7 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 | Phase 5 — Permission resolution & route guard | [rbac-authz-resolution.md](plans/rbac-authz-resolution.md) | 2026-05-31 | |
 | Phase 6 — Staff / platform layer | [rbac-staff-platform.md](plans/rbac-staff-platform.md) | 2026-05-31 | |
 | Phase 7 — Impersonation, audit log & JIT elevation | [rbac-staff-impersonation-audit.md](plans/rbac-staff-impersonation-audit.md) | 2026-05-31 | |
+| Authentication — cookie + JWT (org + staff realms) | [rbac-authentication.md](plans/rbac-authentication.md) | 2026-05-31 | |
 
 
 ### Priority 2 — Shared infrastructure

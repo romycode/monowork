@@ -3,7 +3,7 @@
 ## Goal
 
 Add the parallel, org-independent authorization space for platform staff: a separate
-permission vocabulary, a separate route tree (`/admin/*`), and an `is_staff` short-circuit
+permission vocabulary, a separate route tree (`/internal/*`), and an `is_staff` short-circuit
 wired into the existing `can()`. Staff tables must **not** reuse the org role/permission
 tables — different namespace, different blast radius.
 
@@ -37,11 +37,11 @@ if org is undefined:
 ```
 The cheap `is_staff` flag gates whether the staff tables are even queried.
 
-### New: `api/src/admin/` route tree
+### New: `api/src/internal/` route tree
 - `requireStaffPermission(permission)` preHandler — analogous to `requirePermission` but
   org-free: 401 if no user, 403 if `!isStaff` or `staffHas` is false.
-- Example admin routes guarded by it: `POST /admin/orgs/:id/suspend`
-  (`org.suspend`), `GET /admin/orgs` (`org.read`). These operate on the platform; org
+- Example admin routes guarded by it: `POST /internal/orgs/:id/suspend`
+  (`org.suspend`), `GET /internal/orgs` (`org.read`). These operate on the platform; org
   membership is irrelevant here.
 
 ### Seed — first superadmin
@@ -54,8 +54,8 @@ The cheap `is_staff` flag gates whether the staff tables are even queried.
 - `staff.service.test.ts` (union of staff permissions, gate behavior),
   `staff` repo/route tests, `require-staff-permission.test.ts` (401/403/200).
 - Extend `authz.service.test.ts` for the `org === undefined` staff branch.
-- Register the `/admin` routers in `app.ts` with `traced(...)`.
-- `just db-generate` / `just db-migrate`; Bruno under `bruno/admin/`.
+- Register the `/internal` routers in `app.ts` with `traced(...)`.
+- `just db-generate` / `just db-migrate`; Bruno under `bruno/internal/`.
 
 ## Out of scope
 - Impersonation, audit log, support read-grants, JIT elevation → phase 7. In this phase a
