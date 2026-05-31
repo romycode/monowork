@@ -23,6 +23,7 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Multitenant RBAC — architecture & design | [multitenant-rbac-design.md](plans/multitenant-rbac-design.md) | 2026-05-31 | 2026-05-31 |
 | Phase 1 — Organizations slice | [rbac-organizations.md](plans/rbac-organizations.md) | 2026-05-31 | 2026-05-31 |
 | Add `@monowork/tracing` tests for `traced()` | [tracing-traced-tests.md](plans/tracing-traced-tests.md) | 2026-05-27 | 2026-05-31 |
+| Define Claude Code agent harness (`.claude/` agents, settings, hooks) | [agent-harness-definition.md](plans/agent-harness-definition.md) | 2026-05-31 | 2026-05-31 |
 
 ## Pending
 

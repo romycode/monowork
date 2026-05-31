@@ -118,3 +118,7 @@ Never start implementation without recording the task and its plan first. Never 
 ## Code conventions
 
 See [`docs/conventions.md`](docs/conventions.md) for the full reference covering formatting, naming, TypeScript strictness, testing patterns, and dependency management.
+
+## Agent harness
+
+Claude Code configuration lives in [`.claude/`](.claude/) — see [`.claude/README.md`](.claude/README.md). It defines task-specialised sub-agents (`slice-builder`, `test-author`, `code-reviewer`, `vue-frontend`, `documenter`), shared `settings.json` (permissions, env), and hooks: a PreToolUse `plan-guard` enforcing the plan-first rule on source edits, and a Stop hook that runs `just format`.
