@@ -10,6 +10,7 @@ default:
 
 # Bootstrap: build production image then start all services
 setup: build install start hooks
+    just db-push
 
 # Build the development image used by compose
 build:

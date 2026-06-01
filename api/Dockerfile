@@ -7,7 +7,9 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
 COPY --link package.json ./
-RUN npm install -g "$(node -p 'require("./package.json").packageManager')" && \
+RUN apt update && \
+    apt install -y wget && \
+    npm install -g "$(node -p 'require("./package.json").packageManager')" && \
     mkdir -p /pnpm && \
     chown node:node /app /pnpm
 

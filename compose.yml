@@ -1,13 +1,5 @@
 # Docker Compose v2 — no version field required (obsolete since Compose v2.27+)
 services:
-  ide:
-    build:
-      context: .
-      dockerfile: api/Dockerfile
-      target: development
-    working_dir: /monowork
-    volumes:
-      - .:/monowork
   api:
     build:
       context: .
@@ -41,11 +33,7 @@ services:
         condition: service_started
     restart: unless-stopped
     healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - "fetch('http://localhost:7000/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
+      test: ["CMD-SHELL", "wget http://localhost:7000/health -O /dev/null"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -67,11 +55,7 @@ services:
       NODE_ENV: development
     restart: unless-stopped
     healthcheck:
-      test:
-        - CMD
-        - node
-        - -e
-        - "fetch('http://localhost:7001').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
+      test: ["CMD-SHELL", "wget http://localhost:7001/health -O /dev/null"]
       interval: 30s
       timeout: 5s
       retries: 3
