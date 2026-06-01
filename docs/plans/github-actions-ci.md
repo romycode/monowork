@@ -35,10 +35,22 @@ on:
 
 ## Considerations
 
-- The project uses Docker Compose for everything — the CI workflow should `just setup` then run each job, or use a matrix to parallelize.
-- Alternatively, run `pnpm` directly in CI without Docker for faster cold starts (requires installing Node.js + pnpm + Postgres service container).
-- Integration tests (`just test-integration`) need a real database — include a Postgres service container.
+- The project uses Docker Compose for everything — the CI workflow drives it
+  through `just`, matching local dev exactly.
+- Integration tests (`just test-integration`) need a real database. They
+  connect to the compose `postgres` service via `DATABASE_URL` (node-postgres,
+  not Testcontainers), so CI pushes the schema with `just db-push` after
+  postgres is healthy, then runs the full `just test`.
 
-## Open questions
+## Resolution (2026-05-31)
 
-- Docker-in-Docker vs native Node.js in CI? Docker matches local dev but is slower. Native is faster but diverges from local.
+- **Runner:** Docker-in-the-runner via official Docker actions
+  (`docker/setup-buildx-action`) so the compose build uses Buildx; everything
+  else goes through `just`.
+- **Telemetry:** disabled in CI — the CI `.env` sets `OTEL_SDK_DISABLED=true`
+  and the otel-lgtm observability container is never started.
+- **Coverage:** none is collected (api uses `tsx --test`, app uses `vitest
+  run` with no coverage config), so there is nothing to disable.
+- **Tests:** full `just test` (unit + acceptance + integration + app); the
+  integration suite runs against the compose postgres service.
+

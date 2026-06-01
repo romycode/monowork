@@ -55,15 +55,16 @@ describe('UsersRepository.findById', () => {
 describe('UsersRepository.upsert', () => {
   it('creates a new user and returns created=true', async () => {
     const id = randomUUIDv7()
-    const { user, created } = await repo.upsert(id, {
+    const result = await repo.upsert(id, {
       email: 'alice@example.com',
       name: 'Alice',
       password: 'password123',
     })
-    assert.equal(created, true)
-    assert.equal(user.id, id)
-    assert.equal(user.email, 'alice@example.com')
-    assert.equal(user.name, 'Alice')
+    assert.ok(result)
+    assert.equal(result.created, true)
+    assert.equal(result.user.id, id)
+    assert.equal(result.user.email, 'alice@example.com')
+    assert.equal(result.user.name, 'Alice')
   })
 
   it('returns the existing user with created=false on replay', async () => {
