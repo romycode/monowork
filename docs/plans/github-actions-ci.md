@@ -47,8 +47,11 @@ on:
 - **Runner:** Docker-in-the-runner via official Docker actions
   (`docker/setup-buildx-action`) so the compose build uses Buildx; everything
   else goes through `just`.
-- **Telemetry:** disabled in CI — the CI `.env` sets `OTEL_SDK_DISABLED=true`
-  and the otel-lgtm observability container is never started.
+- **Telemetry:** disabled in CI — a CI-only `compose.override.yml` (generated
+  at runtime, gitignored) sets `OTEL_SDK_DISABLED=true` on the api service,
+  and the otel-lgtm observability container is never started. (`compose.yml`
+  no longer declares an `env_file`, so the override is how the var is
+  injected.)
 - **Coverage:** none is collected (api uses `tsx --test`, app uses `vitest
   run` with no coverage config), so there is nothing to disable.
 - **Tests:** full `just test` (unit + acceptance + integration + app); the
