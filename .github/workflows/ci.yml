@@ -20,9 +20,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        # Official Docker action — provides the Buildx builder that
-        # `docker compose build` uses for the dev image.
+        # Official Docker action — sets up Buildx for `docker compose build`.
+        # Pin the `docker` driver (not the default `docker-container`): it
+        # builds straight into the local image store, so the image is present
+        # for the later `docker compose up`. The `docker-container` driver
+        # keeps the result in the build cache only, leaving `up` with no image.
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Install just
         uses: extractions/setup-just@v2
