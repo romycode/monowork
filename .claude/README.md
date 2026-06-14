@@ -2,7 +2,7 @@
 
 Claude Code configuration for this repository: named sub-agents, repo-tuned
 settings, and lifecycle hooks. It encodes the architecture, conventions, and
-plan-first workflow from [`AGENTS.md`](../AGENTS.md) and
+lightweight workflow from [`AGENTS.md`](../AGENTS.md) and
 [`docs/conventions.md`](../docs/conventions.md) so delegated work stays
 on-convention without re-explaining the rules each time.
 
@@ -19,7 +19,6 @@ on-convention without re-explaining the rules each time.
 │   ├── vue-frontend.md
 │   └── documenter.md
 └── hooks/
-    ├── plan-guard.sh      # PreToolUse: enforce plan-first on source edits
     └── format-on-stop.sh  # Stop: best-effort `just format`
 ```
 
@@ -32,7 +31,7 @@ automatically when a task matches its `description`, or you can ask explicitly
 
 | Agent | Use it for |
 |---|---|
-| `planner` | Authoring the plan artifacts (`docs/plans/<slug>.md` + a `docs/planing.md` row) at the start of a task. Context-frugal; reads the minimum, writes no code. Runs on `opus`. |
+| `planner` | Optional: authoring a plan note (`docs/plans/<slug>.md`) for larger tasks. Context-frugal; reads the minimum, writes no code. Runs on `opus`. |
 | `slice-builder` | A full API vertical slice (`<feature>.ts` / `.db.ts` / `.repo.ts` / `.service.ts` / `.routes.ts`) honouring the ports & adapters layering rules. |
 | `test-author` | Unit (`.service.test.ts`) and acceptance (`.routes.test.ts`) tests using `node:test`, `mock.fn`, builders, and `app.inject()`. |
 | `code-reviewer` | A read-only review of the working diff for layering, naming, import-alias, and convention violations. |
@@ -47,11 +46,11 @@ to the specialists below and folds their work back together.
 
 When the user asks for work:
 
-1. **Plan & track first.** Delegate to the `planner` agent to create
-   `docs/plans/<slug>.md` and a `docs/planing.md` row before any code (the
-   plan-first hard rule; the `plan-guard` hook enforces it on source edits). The
-   planner also proposes the branch name and the delegation breakdown for the
-   steps below.
+1. **Understand & track lightly.** Read the relevant slice and existing
+   patterns first, then keep a short checklist of the units of work. For larger
+   tasks you may optionally delegate to the `planner` agent to draft a
+   `docs/plans/<slug>.md` note — there is no plan-first hard rule. Decide the
+   branch name and the delegation breakdown for the steps below.
 2. **Branch first — Conventional Commits.** Create one task branch
    `<type>/<slug>`, `<type>` ∈ `feat | fix | chore | docs | refactor | test |
    perf | build | ci`, e.g. `feat/invoices-slice`:
@@ -98,30 +97,21 @@ When the user asks for work:
    > means landing those commits onto the one task branch — not sharing a
    > checkout.
 6. **Review & finish.** Run `code-reviewer` over the assembled diff, run
-   `just lint` / `just typecheck` / `just test` (services up), fill the
-   `Completed` date and move the planing row to **Done**. **Push or open a PR
-   only when the user asks.**
+   `just lint` / `just typecheck` / `just test` (services up), and tick off the
+   checklist. **Push or open a PR only when the user asks.**
 
 ## Settings (`settings.json`)
 
 - **permissions** — pre-allows `just *` and read-only git so routine commands
   don't prompt; denies force-push and reading `.env` secrets.
 - **env** — shared environment defaults.
-- **hooks** — wires the two scripts below.
+- **hooks** — wires the script below.
 
 `settings.json` is shared (committed). For personal overrides that should not be
 committed, use `.claude/settings.local.json` (git-ignored by Claude Code
 convention) — add it to `.gitignore` if you create one.
 
 ## Hooks
-
-### `plan-guard.sh` — PreToolUse (`Write|Edit|MultiEdit`)
-
-Enforces the plan-first hard rule: blocks edits to application source under
-`api/src/`, `app/src/`, or `packages/*/src/` unless a plan change is pending in
-the working tree (a new/modified `docs/plans/` file or a `docs/planing.md`
-edit). Docs, config, `.claude/`, and `bruno/` are always allowed. Bypass an
-already-planned task with `SKIP_PLAN_GUARD=1`.
 
 ### `format-on-stop.sh` — Stop
 

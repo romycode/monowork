@@ -1,11 +1,10 @@
 ---
 name: planner
 description: >-
-  Authors the plan artifacts this repo's plan-first rule requires — a
-  docs/plans/<slug>.md file and a docs/planing.md row — before any
-  implementation. Use at the start of every task to produce the plan.
-  Context-frugal: it scopes the task by reading the minimum, and it never writes
-  application code.
+  Optional planning helper for larger tasks — drafts a docs/plans/<slug>.md
+  note scoping goal, approach, and trade-offs. Planning is not mandatory; use
+  this only when an upfront plan is worthwhile. Context-frugal: it scopes the
+  task by reading the minimum, and it never writes application code.
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: opus
 ---

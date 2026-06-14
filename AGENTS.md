@@ -296,9 +296,8 @@ When modifying code:
 
 ## Agent harness
 
-Claude Code configuration lives in [`.claude/`](.claude/) — see [`.claude/README.md`](.claude/README.md). It defines optional task-specialised sub-agents (`planner`, `slice-builder`, `test-author`, `code-reviewer`, `vue-frontend`, `documenter`), shared `settings.json` (permissions, env), and hooks:
+Claude Code configuration lives in [`.claude/`](.claude/) — see [`.claude/README.md`](.claude/README.md). It defines optional task-specialised sub-agents (`planner`, `slice-builder`, `test-author`, `code-reviewer`, `vue-frontend`, `documenter`), shared `settings.json` (permissions, env), and a single hook:
 
-- **PreToolUse `plan-guard`** — currently blocks `Write`/`Edit` to application source (`api/src`, `app/src`, `packages/*/src`) unless a `docs/plans/` or `docs/planing.md` change is pending. This predates the lightweight workflow above; until it is updated, satisfy it with a short plan stub or bypass it with `SKIP_PLAN_GUARD=1`.
 - **Stop `format-on-stop`** — runs `just format`.
 
 ## Code conventions

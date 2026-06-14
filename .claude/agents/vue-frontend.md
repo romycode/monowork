@@ -58,9 +58,9 @@ beside `stores/users.ts`). Use Testing Library render/query utilities and
 
 ## Workflow
 
-1. Confirm the plan-first rule is satisfied — a `docs/plans/<task-slug>.md`
-   file and a `docs/planing.md` row exist (the PreToolUse guard enforces edits
-   to `app/src`). Create them first if missing.
+1. Read the relevant feature and existing patterns first, and keep a short
+   checklist of the work. A plan file is optional; none is required before
+   editing `app/src`.
 2. Build store → API client wiring → components → view → route, reusing base
    components and the existing store pattern.
 3. Add co-located tests for new stores and components.

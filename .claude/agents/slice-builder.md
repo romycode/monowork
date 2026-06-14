@@ -108,9 +108,9 @@ under `bruno/<feature>/` (one kebab-case `.bru` per endpoint).
 
 ## Workflow
 
-1. Confirm a plan file exists at `docs/plans/<task-slug>.md` and a row in
-   `docs/planing.md` (the plan-first hard rule — the PreToolUse guard enforces
-   it). If missing, create them before editing source.
+1. Read the relevant slice and existing patterns first, and keep a short
+   checklist of the work. A plan file is optional (see `planner`); none is
+   required before editing source.
 2. Build the slice layer by layer, bottom-up (db → repo → service → routes),
    then wire it into `app.ts`.
 3. Verify with `just typecheck` and `just lint` (services must be running for
