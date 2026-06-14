@@ -259,9 +259,9 @@ Three buckets, named by file suffix:
 
 **Integration — `*.int.ts` (`just test-integration`)** — adapters against real external services: Drizzle repositories (`<feature>.repo.ts`) against a real Postgres, external API clients. Requires running services.
 
-**Acceptance — `*.spec.ts` (`just test-acceptance`)** — end-to-end API tests: drive the real app (`createApp()`) over HTTP against a real database, no mocks.
+**Acceptance — `*.spec.ts` (`just test-acceptance`)** — end-to-end API tests. Acceptance tests **MUST use real infrastructure**: drive the real app (`createApp()`) over HTTP against a real database. **Mocking the repository (or any infrastructure) in an acceptance spec is not allowed.**
 
-> Migration note: `users.routes.spec.ts` and `organizations.routes.spec.ts` still mock the repository (HTTP-contract only, no DB) and are flagged to become true end-to-end; `health.routes.spec.ts` (boots `createApp()`) is the closest existing example of the target.
+> **Advisory — migration required.** `users.routes.spec.ts` and `organizations.routes.spec.ts` are **currently non-compliant**: they still mock the repository (HTTP-contract only, no DB). They **must be migrated** to true end-to-end against a real database. This is known debt and is **not** being done in this change. `health.routes.spec.ts` (boots `createApp()`) is the compliant reference.
 
 Mocking rule (unit):
 

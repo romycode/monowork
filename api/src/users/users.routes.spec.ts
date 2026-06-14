@@ -1,3 +1,6 @@
+// ADVISORY: non-compliant acceptance spec — this mocks the repository instead of
+// using real infrastructure. Acceptance tests MUST run end-to-end via createApp()
+// against a real database. This spec MUST be migrated; left as-is intentionally for now.
 import type { UsersRepository } from '#/users/users'
 import { usersRouter } from '#/users/users.routes'
 import { userService } from '#/users/users.service'

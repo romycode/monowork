@@ -60,9 +60,9 @@ Then check the changed files against `AGENTS.md` and `docs/conventions.md`.
 - New/changed slices have matching tests in the right bucket: `*.unit.ts`
   (domain + application, mocked repo), `*.int.ts` (repository vs real DB),
   `*.spec.ts` (end-to-end API). Unit tests never touch I/O.
-- Acceptance specs that still use the interim mocked minimal-app pattern (not
-  `createApp()`) close the app in `t.after()` — flag as a suggestion to migrate
-  to true e2e, not blocking.
+- Acceptance specs (`*.spec.ts`) MUST use real infrastructure (`createApp()` +
+  real DB, no mocks). A spec that mocks the repository is **advisory only** — note
+  it as known debt to migrate to true e2e; never block on it.
 
 ### Frontend (`app/`)
 

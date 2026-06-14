@@ -394,11 +394,11 @@ Three test buckets, named by file suffix:
 |---|---|---|---|
 | **Unit** | `*.unit.ts` | Domain (`<feature>.ts`) + application (`<feature>.service.ts`) logic in isolation; mock the repository interface | None |
 | **Integration** | `*.int.ts` | Adapters against real external services — Drizzle repositories (`<feature>.repo.ts`) against Postgres, external API clients | Real DB / services |
-| **Acceptance** | `*.spec.ts` | End-to-end API: the real app (`createApp()`) over HTTP against a real database | Real DB / HTTP |
+| **Acceptance** | `*.spec.ts` | End-to-end API: the real app (`createApp()`) over HTTP against a real database. **MUST use real infrastructure — no mocks** | Real DB / HTTP |
 
-Run with `just test-unit`, `just test-integration`, `just test-acceptance`, or `just test` (all). Integration and true acceptance tests need running services; unit tests never touch I/O.
+Run with `just test-unit`, `just test-integration`, `just test-acceptance`, or `just test` (all). Integration and acceptance tests need running services; unit tests never touch I/O.
 
-> **Migration note.** `users.routes.spec.ts` and `organizations.routes.spec.ts` currently still mock the repository (an HTTP-contract test, not true end-to-end) and run without a DB. They are flagged to migrate to real end-to-end against Postgres; `health.routes.spec.ts`, which boots `createApp()`, is the closest existing example of the target shape.
+> **Advisory — migration required.** `users.routes.spec.ts` and `organizations.routes.spec.ts` are **currently non-compliant**: they still mock the repository (an HTTP-contract test, not true end-to-end) and run without a DB. They **must be migrated** to real end-to-end against Postgres. This is known debt, deliberately left as-is for now. `health.routes.spec.ts`, which boots `createApp()`, is the compliant reference.
 
 #### Domain object builders
 
@@ -455,9 +455,9 @@ describe('UsersService.get', () => {
 
 #### Acceptance tests (`*.spec.ts`)
 
-The target is **end-to-end**: boot the real app with `createApp()` and drive it over HTTP against a real database, asserting the full request → DB → response path with no mocks (`health.routes.spec.ts` boots `createApp()` today).
+Acceptance tests **MUST use real infrastructure**: boot the real app with `createApp()` and drive it over HTTP against a **real database**, asserting the full request → DB → response path with **no mocks** (`health.routes.spec.ts` boots `createApp()` today). Mocking the repository in an acceptance spec is not allowed.
 
-Interim pattern (still used by `users.routes.spec.ts` / `organizations.routes.spec.ts`, pending migration): build a minimal Fastify app with the real service wired to a **mocked** repository and register only the router under test. This checks the HTTP contract without a DB.
+> **Advisory — do not copy.** `users.routes.spec.ts` / `organizations.routes.spec.ts` still use a **non-compliant legacy pattern** — a minimal Fastify app with the real service wired to a **mocked** repository (no DB). The snippet below shows that pattern only so it is recognisable; it is being **replaced**, not followed. Both specs **must be migrated** to true end-to-end; don't write new acceptance specs this way.
 
 ```ts
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {

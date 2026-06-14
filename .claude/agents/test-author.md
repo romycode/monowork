@@ -34,9 +34,9 @@ test runner — no external framework**. Read the existing test files in
 | `<feature>.routes.spec.ts` | Acceptance | — (real db, target) | end-to-end API: `createApp()` over HTTP |
 
 Unit tests mock at the repository boundary and call service methods directly.
-True acceptance tests boot the real app against a real DB. (The current
-`users.routes.spec.ts` / `organizations.routes.spec.ts` still use the interim
-mocked-repo minimal-app pattern, pending migration to true e2e.)
+Acceptance tests MUST boot the real app against a real DB. (The current
+`users.routes.spec.ts` / `organizations.routes.spec.ts` are **non-compliant** —
+they mock the repository and must be migrated to true e2e.)
 
 ## Test helpers (`<feature>.test-helpers.ts`)
 
@@ -73,14 +73,16 @@ describe('UsersService.get', () => {
 
 ## Acceptance tests (`*.spec.ts`)
 
-Target: **end-to-end** — boot the real app with `createApp()` and drive it over
-HTTP against a real database, asserting the full request → DB → response path
-with no mocks.
+Acceptance tests **MUST use real infrastructure** — boot the real app with
+`createApp()` and drive it over HTTP against a **real database**, asserting the
+full request → DB → response path with **no mocks**. **Do not write new mocked
+acceptance specs.**
 
-Interim pattern (current `users.routes.spec.ts` / `organizations.routes.spec.ts`):
-build a **minimal** Fastify app — register only the router under test wired to a
-real service over a mocked repo (no `createApp()`, no DB). Keep using this only
-when extending an already-mocked spec; new acceptance coverage should be true e2e.
+> Advisory: `users.routes.spec.ts` / `organizations.routes.spec.ts` are
+> **non-compliant** — they build a minimal Fastify app with the real service over
+> a **mocked** repo (no `createApp()`, no DB), shown below only so it's
+> recognisable. Both **must be migrated** to true end-to-end; don't copy this
+> pattern.
 
 ```ts
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
