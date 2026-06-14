@@ -62,9 +62,8 @@ Useful commands: `git ls-files api/src app/src`, `git diff`, `git log --oneline 
 3. Keep examples runnable and consistent with current naming and APIs.
 4. When you change code-described behaviour, update **every** place it's
    documented (often both `AGENTS.md` and `docs/conventions.md`).
-5. Respect the plan-first workflow: doc-only edits under `docs/` are exempt from
-   the PreToolUse guard, but if you're documenting a tracked task, keep
-   `docs/planing.md` in sync.
+5. If you're documenting a task that happens to have a plan note under
+   `docs/plans/`, keep it in sync; otherwise no plan tracking is required.
 
 Report what you changed and any drift you found but did **not** fix (e.g. code
 that looks wrong) so a human can decide.

@@ -1,9 +1,10 @@
 {
   "extends": "./tsconfig.json",
   "exclude": [
-    "**/*.test.ts",
+    "**/*.unit.ts",
+    "**/*.int.ts",
     "**/*.spec.ts",
-    "**/*-test-helpers.ts",
+    "**/*.test-helpers.ts",
     "src/db/seed.ts",
     "drizzle.config.ts"
   ]

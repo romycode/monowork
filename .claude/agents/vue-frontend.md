@@ -20,7 +20,8 @@ app/src/
 ├── main.ts            # bootstrap
 ├── App.vue
 ├── router/index.ts    # named routes
-├── stores/            # one Pinia store per domain concept
+├── stores/            # one Pinia store per domain concept (shared/stateful state)
+├── composables/       # reusable logic — use<Thing>.ts (logic, not state)
 ├── components/        # PascalCase .vue
 │   └── base/          # BaseButton, BaseCard, BaseInput — reuse these
 ├── views/             # route-level components
@@ -39,6 +40,11 @@ app/src/
   syntax (`defineStore('name', () => { ... })`) and exported as a
   `use<Name>Store` composable — follow `stores/users.ts`, including its
   `loading` / `error` refs and the `toMessage(err)` error-normalisation pattern.
+- **Composables**: the design pattern for reusable logic. Extract repeated
+  component logic, side-effect orchestration, and cross-component behaviour into
+  `use<Thing>.ts` files in `composables/` (one concern per file, returning
+  refs/computed/functions). Composables hold logic, not application state — keep
+  stateful shared state in a Pinia store.
 - **Router**: routes in `router/index.ts`, always **named**.
 - **API access**: go through `~/lib/api`. Reuse `ApiError` and the typed
   request helpers; surface failures via the store's `error` state. Respect the
@@ -58,11 +64,12 @@ beside `stores/users.ts`). Use Testing Library render/query utilities and
 
 ## Workflow
 
-1. Confirm the plan-first rule is satisfied — a `docs/plans/<task-slug>.md`
-   file and a `docs/planing.md` row exist (the PreToolUse guard enforces edits
-   to `app/src`). Create them first if missing.
-2. Build store → API client wiring → components → view → route, reusing base
-   components and the existing store pattern.
+1. Read the relevant feature and existing patterns first, and keep a short
+   checklist of the work. A plan file is optional; none is required before
+   editing `app/src`.
+2. Build store → API client wiring → composables → components → view → route,
+   reusing base components and the existing store pattern. Pull reusable logic
+   out of components into `composables/use<Thing>.ts`.
 3. Add co-located tests for new stores and components.
 4. Verify with `just lint` and `pnpm --filter @monowork/app test`. Report
    results plainly; show output on failure.

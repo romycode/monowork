@@ -1,23 +1,9 @@
 import { type DB } from '#/db/index'
-import type { User } from '#/users/users'
+import type { User, UsersRepository } from '#/users/users'
 import { users } from '#/users/users.db'
 import { and, eq, isNull } from 'drizzle-orm'
 
 type UserRecord = typeof users.$inferSelect
-
-export type UsersRepository = {
-  findAll: () => Promise<User[]>
-  findById: (id: string) => Promise<User | undefined>
-  upsert: (
-    id: string,
-    data: { email: string; name: string; password: string },
-  ) => Promise<{ user: User; created: boolean } | undefined>
-  update: (
-    id: string,
-    data: { email?: string | undefined; name?: string | undefined; password?: string | undefined },
-  ) => Promise<User | undefined>
-  remove: (id: string) => Promise<User | undefined>
-}
 
 function toUser({ password: _, deletedAt: __, ...user }: UserRecord): User {
   return user

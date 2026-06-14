@@ -1,3 +1,6 @@
+// ADVISORY: non-compliant acceptance spec — this mocks the repository instead of
+// using real infrastructure. Acceptance tests MUST run end-to-end via createApp()
+// against a real database. This spec MUST be migrated; left as-is intentionally for now.
 import type { OrganizationsRepository } from '#/organizations/organizations.repo'
 import { organizationsRouter } from '#/organizations/organizations.routes'
 import { organizationService } from '#/organizations/organizations.service'

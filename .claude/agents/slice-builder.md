@@ -11,7 +11,10 @@ model: sonnet
 
 You build **API vertical slices** for the `@monowork/api` Fastify 5 backend.
 Read `AGENTS.md` and `docs/conventions.md` before writing code, and mirror the
-existing `api/src/users/` slice as the reference implementation.
+existing `api/src/users/` slice for **naming, style, and conventions**. For new
+slices apply the two refinements those existing slices predate: define the
+repository interface in `<feature>.ts` (domain), and make the slice plugin its
+own composition root (see *Composition root & wiring*).
 
 ## File layout (current naming convention)
 
@@ -19,16 +22,22 @@ A slice lives in `api/src/<feature>/` and owns every layer. Use these exact
 file names — domain model is plain `<feature>.ts`:
 
 ```
-<feature>.ts             # domain types — pure TS, no Drizzle imports
+<feature>.ts             # domain entity types + repository interface — pure TS, no Drizzle
 <feature>.db.ts          # Drizzle pgTable definition only
-<feature>.repo.ts        # DB adapter (outbound port) + repository type; maps DB record → domain
+<feature>.repo.ts        # repository implementation (DB adapter); maps DB record → domain
 <feature>.service.ts     # business logic (inbound port); factory function
-<feature>.routes.ts      # HTTP adapter; Zod schemas live here
+<feature>.routes.ts      # HTTP adapter; Zod schemas live here (no infra imports)
+<feature>.plugin.ts      # slice composition root — wires repo + service, registers routes
 <feature>.test-helpers.ts # builders + mockRepo (excluded from prod build)
 ```
 
-Tests (`<feature>.service.test.ts`, `<feature>.routes.test.ts`,
-`<feature>.repo.test.ts`) are the test-author agent's job — only write them if
+This flat layout is the default. A slice may opt in to a deeper
+`domain/ application/ infrastructure/` folder layout **only** when its domain
+genuinely warrants it (multiple aggregates, invariants, multi-entity
+workflows) — never for CRUD features. Don't introduce those folders speculatively.
+
+Tests (`<feature>.service.unit.ts`, `<feature>.repo.int.ts`,
+`<feature>.routes.spec.ts`) are the test-author agent's job — only write them if
 explicitly asked.
 
 > Note: `docs/conventions.md` still shows older `-schema.ts` / `-repository.ts`
@@ -40,16 +49,21 @@ explicitly asked.
 
 | Layer | File | May depend on |
 |---|---|---|
+| Composition root | `<feature>.plugin.ts` | repo + service factories, `db`, Fastify |
 | HTTP adapter | `<feature>.routes.ts` | service port, Zod, Fastify |
 | Service (inbound port) | `<feature>.service.ts` | repository port, domain types |
-| DB adapter (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton |
+| Repository impl (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain |
 | Schema | `<feature>.db.ts` | Drizzle table helpers |
-| Domain | `<feature>.ts` | nothing (pure TS) |
+| Domain (entity types + repo interface) | `<feature>.ts` | nothing (pure TS) |
 
 - A router must **never** call a repository directly.
 - The service knows domain types + the repository port only — no HTTP, no Drizzle.
-- The repository is the only layer that knows both the DB record shape and the
-  domain type, and owns the mapping between them.
+- The repository **interface** (the port) belongs in `<feature>.ts` (domain);
+  `<feature>.repo.ts` implements it. The service depends on the interface from
+  the domain file, never on the implementation. (Existing slices still keep the
+  type in `<feature>.repo.ts` — move it to `<feature>.ts` for new slices.)
+- The repository implementation is the only layer that knows both the DB record
+  shape and the domain type, and owns the mapping between them.
 
 ## Hard conventions
 
@@ -90,17 +104,25 @@ module top. Receive the service via a named plugin option keyed by the service
 name; register with `void app.register(<feature>Router, { <feature>Service })`.
 Don't annotate `req`/`reply` — the Zod type provider derives them.
 
-## Wiring
+## Composition root & wiring
 
-After building the slice, wire it in `api/src/app.ts`: build the repository over
-the `db` singleton and the service over the repository, each wrapped with
-`traced(...)` for observability, then register the router. Mirror the existing
-users wiring exactly:
+Each slice is its own **composition root** — no global DI container. It builds
+its repository over the `db` singleton and its service over the repository, each
+wrapped with `traced(...)` for observability, then registers the router.
+
+Preferred for **new** slices: put this wiring in `<feature>.plugin.ts` (not
+`routes.ts`, so the router stays infra-free and unit-testable) and have
+`api/src/app.ts` just `void app.register(<feature>Slice)`. The **`users` slice**
+is the reference. `organizations` still wires centrally in `createApp()` — match
+that only when extending an already-central slice. The plugin looks like:
 
 ```ts
-const usersRepo = traced(createUsersRepository(db), 'UsersRepository')
-const usersService = traced(userService(usersRepo), 'UsersService')
-void app.register(usersRouter, { usersService })
+// users.plugin.ts
+export const usersSlice: FastifyPluginAsync = async (app) => {
+  const repo = traced(createUsersRepository(db), 'UsersRepository')
+  const usersService = traced(userService(repo), 'UsersService')
+  void app.register(usersRouter, { usersService })
+}
 ```
 
 If the feature adds HTTP endpoints, also add Bruno requests
@@ -108,9 +130,9 @@ under `bruno/<feature>/` (one kebab-case `.bru` per endpoint).
 
 ## Workflow
 
-1. Confirm a plan file exists at `docs/plans/<task-slug>.md` and a row in
-   `docs/planing.md` (the plan-first hard rule — the PreToolUse guard enforces
-   it). If missing, create them before editing source.
+1. Read the relevant slice and existing patterns first, and keep a short
+   checklist of the work. A plan file is optional (see `planner`); none is
+   required before editing source.
 2. Build the slice layer by layer, bottom-up (db → repo → service → routes),
    then wire it into `app.ts`.
 3. Verify with `just typecheck` and `just lint` (services must be running for

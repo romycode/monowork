@@ -39,7 +39,7 @@ monowork/
 
 ### `api/` layout
 
-Organised as **vertical slices + ports & adapters**. Each feature owns all its layers under a single directory:
+Organised as **vertical slices + ports & adapters**, one file per layer. This flat layout is the **default and standard**; each feature owns all its layers under a single directory:
 
 ```
 api/
@@ -52,19 +52,23 @@ api/
 │   │   ├── index.ts          # Drizzle db singleton and DB type
 │   │   └── seed.ts           # Dev seed script
 │   └── <feature>/
-│       ├── <feature>.ts             # Domain model — pure TS types, no Drizzle imports
+│       ├── <feature>.ts             # Domain — pure TS entity types + repository interface, no Drizzle
 │       ├── <feature>.db.ts          # Drizzle table definition
-│       ├── <feature>.repo.ts        # DB adapter (outbound port)
+│       ├── <feature>.repo.ts        # Repository implementation (DB adapter)
 │       ├── <feature>.service.ts     # Business logic (inbound port)
 │       ├── <feature>.routes.ts      # HTTP adapter — thin, delegates to service
-│       ├── <feature>.service.test.ts # Unit tests — mocks repository, tests service logic
-│       ├── <feature>.routes.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
+│       ├── <feature>.plugin.ts      # Slice composition root — wires repo + service, registers routes
+│       ├── <feature>.service.unit.ts # Unit (application) — mocks repository, tests service logic
+│       ├── <feature>.repo.int.ts     # Integration — repository against a real Postgres
+│       ├── <feature>.routes.spec.ts  # Acceptance — end-to-end API (target); see migration note
 │       └── <feature>.test-helpers.ts # Builders + mockRepo (excluded from production build)
 ├── drizzle.config.ts
 ├── tsconfig.json
 ├── tsconfig.build.json       # Excludes tests/seed from production build
 └── package.json
 ```
+
+A slice may **opt in** to a deeper `domain/ application/ infrastructure/` folder layout, but only when its domain logic genuinely warrants it (multiple aggregates, real invariants, multi-entity workflows) — never for CRUD-shaped features. Keep slices flat by default.
 
 ### `app/` layout
 
@@ -74,6 +78,7 @@ app/
 │   ├── main.ts               # Vue app bootstrap
 │   ├── App.vue
 │   ├── router/index.ts
+│   ├── composables/          # reusable logic (use<Thing>.ts)
 │   └── stores/               # Pinia stores
 ├── vite.config.ts
 ├── tsconfig.json             # Project references
@@ -119,6 +124,7 @@ Run `just lint` to check, `just lint-fix` to autofix.
 | Subject | Convention | Example |
 |---|---|---|
 | Files | kebab-case with a dot-separated layer suffix | `users.repo.ts` |
+| Test files | layer descriptor + bucket suffix `.unit.ts` / `.int.ts` / `.spec.ts` | `users.service.unit.ts`, `users.repo.int.ts`, `users.routes.spec.ts` |
 | Functions | camelCase | `createApp`, `findById` |
 | Variables & constants | camelCase | `db`, `env`, `mockUser` |
 | Types & exported schemas | PascalCase for types; camelCase for Zod schemas | `UsersRepository`, `userSchema` |
@@ -208,17 +214,37 @@ The `types` array in each `tsconfig.json` is explicit — TypeScript 6 defaults 
 
 ### Vertical slices + ports & adapters
 
-Each feature is a self-contained directory under `src/<feature>/`. The layers within each slice have strict rules about what they may depend on:
+Each feature is a self-contained directory under `src/<feature>/`, flat (one file per layer) by default. A slice may opt in to a `domain/ application/ infrastructure/` folder layout only when its domain logic genuinely warrants it — not for CRUD features. The layers within each slice have strict rules about what they may depend on:
 
 | Layer | File | May depend on |
 |---|---|---|
+| Slice composition root | `<feature>.plugin.ts` | repo + service factories, `db`, Fastify |
 | HTTP adapter | `<feature>.routes.ts` | Service port, Zod, Fastify |
 | Service (inbound port) | `<feature>.service.ts` | Repository port, domain types |
-| DB adapter (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain model |
+| Repository impl (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain model |
 | DB model | `<feature>.db.ts` | Drizzle table helpers |
-| Domain model | `<feature>.ts` | Pure TS — no Drizzle |
+| Domain (entity types + repository interface) | `<feature>.ts` | Pure TS — no Drizzle |
 
 No layer may skip levels (e.g. a router must not call the repository directly).
+
+### Domain model
+
+`<feature>.ts` is the slice's domain layer: hand-written entity types and the **repository interface** (the port), in pure TypeScript with no Drizzle imports. The service and the repository implementation both depend on this file, and tests mock the interface from here without pulling in infrastructure.
+
+```ts
+// items.ts
+export type Item = {
+  id: string
+  name: string
+}
+
+export type ItemsRepository = {
+  findAll: () => Promise<Item[]>
+  findById: (id: string) => Promise<Item | undefined>
+}
+```
+
+> Existing slices still declare the repository `type` in `<feature>.repo.ts` rather than `<feature>.ts`. That's the current baseline; move the interface into the domain file when you create or substantially change a slice.
 
 ### HTTP method semantics
 
@@ -259,12 +285,14 @@ export const itemsRouter: FastifyPluginAsyncZod<Options> = async (fastify, { ser
 - Register with `void app.register(...)`. The `void` prefix prevents floating-promise lint warnings.
 - Pass the service via plugin options: `void app.register(itemsRouter, { service: itemsService(repo) })`
 
+Each slice is its own **composition root** — no global DI container. The **`users` slice** is the reference: `users.plugin.ts` builds the repository + service (each wrapped with `traced`) and registers the router, and `app.ts` just calls `void app.register(usersSlice)`. Keep this wiring in `<feature>.plugin.ts`, **not** in `routes.ts`, so the router stays free of infrastructure imports and its tests never pull in `db`. `organizations` still wires centrally in `createApp()` (the older pattern) — migrate it when you next touch it.
+
 ### Service
 
-Contains business logic. Receives domain inputs, returns domain objects, delegates persistence to the repository port. Use a factory function — not a class.
+Contains business logic. Receives domain inputs, returns domain objects, delegates persistence to the repository port. Use a factory function — not a class. Depend on the repository **interface** from the domain file (`#/items/items`), never on the repository implementation.
 
 ```ts
-import type { ItemsRepository, Item } from '#/items/items.repo'
+import type { Item, ItemsRepository } from '#/items/items'
 
 export type ItemsService = {
   list: () => Promise<Item[]>
@@ -281,19 +309,22 @@ export function itemsService(repo: ItemsRepository): ItemsService {
 
 ### Repository
 
-DB adapter. Use a factory function — not a class. Define the repository `type` (the port) in the same file so it can be imported and mocked in tests without pulling in Drizzle.
+Repository **implementation** (DB adapter). Use a factory function — not a class. The repository interface (the port) and the domain entity type live in `<feature>.ts` (see *Domain model*); this file imports them, maps the Drizzle record to the domain type, and is the only layer that knows both shapes.
 
 ```ts
-export type Item = typeof items.$inferSelect
+import type { Item, ItemsRepository } from '#/items/items'
+import { items } from '#/items/items.db'
+import type { DB } from '#/db/index'
 
-export type ItemsRepository = {
-  findAll: () => Promise<Item[]>
-  // ...
+type ItemRecord = typeof items.$inferSelect
+
+function toItem(record: ItemRecord): Item {
+  return { id: record.id, name: record.name }
 }
 
 export function createItemsRepository(db: DB): ItemsRepository {
   return {
-    findAll: () => db.select().from(items),
+    findAll: async () => (await db.select().from(items)).map(toItem),
     // ...
   }
 }
@@ -336,7 +367,8 @@ const port = Number(process.env.PORT)
 The frontend uses Vue 3 + Pinia + Vue Router. The stack is configured but mostly scaffolding at this point.
 
 - **Path alias**: `~/` maps to `src/`. Use it for all internal imports.
-- **Stores**: one Pinia store per domain concept, in `src/stores/`. Export the store via a `use<Name>Store` composable using `defineStore`.
+- **Stores**: one Pinia store per domain concept, in `src/stores/`. Export the store via a `use<Name>Store` composable using `defineStore`. Pinia holds shared/stateful state.
+- **Composables**: the design pattern for reusable logic. Extract repeated component logic, side-effect orchestration, watchers, and cross-component behaviour into `use<Thing>.ts` files under `src/composables/` (one concern per file, returning refs/computed/functions). Composables encapsulate logic, not application state — keep stateful shared state in a Pinia store.
 - **Router**: routes are defined in `src/router/index.ts`. Use named routes.
 - **Components**: PascalCase filenames. Single-file components (`.vue`) only.
 - **Styles**: scoped styles (`<style scoped>`) by default.
@@ -356,14 +388,17 @@ The API uses Node's built-in test runner with no external test framework.
 | HTTP testing | `app.inject()` (no real server) |
 | Mocking | `mock.fn()` from `node:test` — no external mocking library |
 
-Each feature slice has two test files:
+Three test buckets, named by file suffix:
 
-| File | Kind | Mocks | What it tests |
+| Bucket | Suffix | What it exercises | External I/O |
 |---|---|---|---|
-| `<feature>.service.test.ts` | Unit | `<Feature>Repository` | Business logic in isolation |
-| `<feature>.routes.test.ts` | Acceptance | `<Feature>Repository` | Full HTTP contract: router + real service |
+| **Unit** | `*.unit.ts` | Domain (`<feature>.ts`) + application (`<feature>.service.ts`) logic in isolation; mock the repository interface | None |
+| **Integration** | `*.int.ts` | Adapters against real external services — Drizzle repositories (`<feature>.repo.ts`) against Postgres, external API clients | Real DB / services |
+| **Acceptance** | `*.spec.ts` | End-to-end API: the real app (`createApp()`) over HTTP against a real database. **MUST use real infrastructure — no mocks** | Real DB / HTTP |
 
-**Both test kinds mock at the repository boundary** — the infrastructure edge. The difference is the entry point: unit tests call service methods directly; acceptance tests send HTTP requests and exercise the service for real.
+Run with `just test-unit`, `just test-integration`, `just test-acceptance`, or `just test` (all). Integration and acceptance tests need running services; unit tests never touch I/O.
+
+> **Advisory — migration required.** `users.routes.spec.ts` and `organizations.routes.spec.ts` are **currently non-compliant**: they still mock the repository (an HTTP-contract test, not true end-to-end) and run without a DB. They **must be migrated** to real end-to-end against Postgres. This is known debt, deliberately left as-is for now. `health.routes.spec.ts`, which boots `createApp()`, is the compliant reference.
 
 #### Domain object builders
 
@@ -405,9 +440,9 @@ export function mockRepo(overrides: Partial<UsersRepository> = {}): UsersReposit
 }
 ```
 
-#### Unit tests (`<feature>.service.test.ts`)
+#### Unit tests (`*.unit.ts`)
 
-Call service methods directly with a mocked repository. Focus on what the service *does*, not HTTP.
+Domain and application logic, no I/O. Application unit tests call service methods directly with a mocked repository; domain unit tests exercise pure logic in `<feature>.ts` directly. Focus on what the code *does*, not HTTP or the DB.
 
 ```ts
 describe('UsersService.get', () => {
@@ -418,9 +453,11 @@ describe('UsersService.get', () => {
 })
 ```
 
-#### Acceptance tests (`<feature>.routes.test.ts`)
+#### Acceptance tests (`*.spec.ts`)
 
-Build a minimal Fastify app with the real service wired to a mocked repository. Never import `createApp()` — register only the router under test.
+Acceptance tests **MUST use real infrastructure**: boot the real app with `createApp()` and drive it over HTTP against a **real database**, asserting the full request → DB → response path with **no mocks** (`health.routes.spec.ts` boots `createApp()` today). Mocking the repository in an acceptance spec is not allowed.
+
+> **Advisory — do not copy.** `users.routes.spec.ts` / `organizations.routes.spec.ts` still use a **non-compliant legacy pattern** — a minimal Fastify app with the real service wired to a **mocked** repository (no DB). The snippet below shows that pattern only so it is recognisable; it is being **replaced**, not followed. Both specs **must be migrated** to true end-to-end; don't write new acceptance specs this way.
 
 ```ts
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
@@ -447,7 +484,7 @@ it('returns 201 when user is created', async (t) => {
 
 **Always close the app** in `t.after()` to prevent resource leaks.
 
-Run tests with `just test` (all), `just test-unit`, or `just test-acceptance`. All three require services to be running.
+Run tests with `just test` (all), `just test-unit` (no services needed), `just test-integration`, or `just test-acceptance`. Integration and true end-to-end acceptance tests require services to be running.
 
 ### App (`app/`)
 
