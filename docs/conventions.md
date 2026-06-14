@@ -58,8 +58,9 @@ api/
 │       ├── <feature>.service.ts     # Business logic (inbound port)
 │       ├── <feature>.routes.ts      # HTTP adapter — thin, delegates to service
 │       ├── <feature>.plugin.ts      # Slice composition root — wires repo + service, registers routes
-│       ├── <feature>.service.test.ts # Unit tests — mocks repository, tests service logic
-│       ├── <feature>.routes.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
+│       ├── <feature>.service.unit.ts # Unit (application) — mocks repository, tests service logic
+│       ├── <feature>.repo.int.ts     # Integration — repository against a real Postgres
+│       ├── <feature>.routes.spec.ts  # Acceptance — end-to-end API (target); see migration note
 │       └── <feature>.test-helpers.ts # Builders + mockRepo (excluded from production build)
 ├── drizzle.config.ts
 ├── tsconfig.json
@@ -123,6 +124,7 @@ Run `just lint` to check, `just lint-fix` to autofix.
 | Subject | Convention | Example |
 |---|---|---|
 | Files | kebab-case with a dot-separated layer suffix | `users.repo.ts` |
+| Test files | layer descriptor + bucket suffix `.unit.ts` / `.int.ts` / `.spec.ts` | `users.service.unit.ts`, `users.repo.int.ts`, `users.routes.spec.ts` |
 | Functions | camelCase | `createApp`, `findById` |
 | Variables & constants | camelCase | `db`, `env`, `mockUser` |
 | Types & exported schemas | PascalCase for types; camelCase for Zod schemas | `UsersRepository`, `userSchema` |
@@ -386,14 +388,17 @@ The API uses Node's built-in test runner with no external test framework.
 | HTTP testing | `app.inject()` (no real server) |
 | Mocking | `mock.fn()` from `node:test` — no external mocking library |
 
-Each feature slice has two test files:
+Three test buckets, named by file suffix:
 
-| File | Kind | Mocks | What it tests |
+| Bucket | Suffix | What it exercises | External I/O |
 |---|---|---|---|
-| `<feature>.service.test.ts` | Unit | `<Feature>Repository` | Business logic in isolation |
-| `<feature>.routes.test.ts` | Acceptance | `<Feature>Repository` | Full HTTP contract: router + real service |
+| **Unit** | `*.unit.ts` | Domain (`<feature>.ts`) + application (`<feature>.service.ts`) logic in isolation; mock the repository interface | None |
+| **Integration** | `*.int.ts` | Adapters against real external services — Drizzle repositories (`<feature>.repo.ts`) against Postgres, external API clients | Real DB / services |
+| **Acceptance** | `*.spec.ts` | End-to-end API: the real app (`createApp()`) over HTTP against a real database | Real DB / HTTP |
 
-**Both test kinds mock at the repository boundary** — the infrastructure edge. The difference is the entry point: unit tests call service methods directly; acceptance tests send HTTP requests and exercise the service for real.
+Run with `just test-unit`, `just test-integration`, `just test-acceptance`, or `just test` (all). Integration and true acceptance tests need running services; unit tests never touch I/O.
+
+> **Migration note.** `users.routes.spec.ts` and `organizations.routes.spec.ts` currently still mock the repository (an HTTP-contract test, not true end-to-end) and run without a DB. They are flagged to migrate to real end-to-end against Postgres; `health.routes.spec.ts`, which boots `createApp()`, is the closest existing example of the target shape.
 
 #### Domain object builders
 
@@ -435,9 +440,9 @@ export function mockRepo(overrides: Partial<UsersRepository> = {}): UsersReposit
 }
 ```
 
-#### Unit tests (`<feature>.service.test.ts`)
+#### Unit tests (`*.unit.ts`)
 
-Call service methods directly with a mocked repository. Focus on what the service *does*, not HTTP.
+Domain and application logic, no I/O. Application unit tests call service methods directly with a mocked repository; domain unit tests exercise pure logic in `<feature>.ts` directly. Focus on what the code *does*, not HTTP or the DB.
 
 ```ts
 describe('UsersService.get', () => {
@@ -448,9 +453,11 @@ describe('UsersService.get', () => {
 })
 ```
 
-#### Acceptance tests (`<feature>.routes.test.ts`)
+#### Acceptance tests (`*.spec.ts`)
 
-Build a minimal Fastify app with the real service wired to a mocked repository. Never import `createApp()` — register only the router under test.
+The target is **end-to-end**: boot the real app with `createApp()` and drive it over HTTP against a real database, asserting the full request → DB → response path with no mocks (`health.routes.spec.ts` boots `createApp()` today).
+
+Interim pattern (still used by `users.routes.spec.ts` / `organizations.routes.spec.ts`, pending migration): build a minimal Fastify app with the real service wired to a **mocked** repository and register only the router under test. This checks the HTTP contract without a DB.
 
 ```ts
 function buildApp(repoOverrides: Partial<UsersRepository> = {}) {
@@ -477,7 +484,7 @@ it('returns 201 when user is created', async (t) => {
 
 **Always close the app** in `t.after()` to prevent resource leaks.
 
-Run tests with `just test` (all), `just test-unit`, or `just test-acceptance`. All three require services to be running.
+Run tests with `just test` (all), `just test-unit` (no services needed), `just test-integration`, or `just test-acceptance`. Integration and true end-to-end acceptance tests require services to be running.
 
 ### App (`app/`)
 

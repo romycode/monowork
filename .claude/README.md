@@ -33,7 +33,7 @@ automatically when a task matches its `description`, or you can ask explicitly
 |---|---|
 | `planner` | Optional: authoring a plan note (`docs/plans/<slug>.md`) for larger tasks. Context-frugal; reads the minimum, writes no code. Runs on `opus`. |
 | `slice-builder` | A full API vertical slice (`<feature>.ts` / `.db.ts` / `.repo.ts` / `.service.ts` / `.routes.ts`) honouring the ports & adapters layering rules. |
-| `test-author` | Unit (`.service.test.ts`) and acceptance (`.routes.test.ts`) tests using `node:test`, `mock.fn`, builders, and `app.inject()`. |
+| `test-author` | Tests across the three buckets — unit (`*.unit.ts`), integration (`*.int.ts`), acceptance (`*.spec.ts`) — using `node:test`, `mock.fn`, builders, and `app.inject()`. |
 | `code-reviewer` | A read-only review of the working diff for layering, naming, import-alias, and convention violations. |
 | `vue-frontend` | `app/` features — Vue 3 + Pinia + Vue Router, base UI components, scoped styles, vitest + Testing Library. |
 | `documenter` | Bringing docs back in line with the code and flagging drift. Touches docs only. |

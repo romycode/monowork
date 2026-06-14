@@ -57,9 +57,12 @@ Then check the changed files against `AGENTS.md` and `docs/conventions.md`.
 
 ### Tests
 
-- New/changed slices have matching `.service.test.ts` and `.routes.test.ts`.
-- Tests mock at the repository boundary; acceptance tests build a minimal app
-  (not `createApp()`) and close it in `t.after()`.
+- New/changed slices have matching tests in the right bucket: `*.unit.ts`
+  (domain + application, mocked repo), `*.int.ts` (repository vs real DB),
+  `*.spec.ts` (end-to-end API). Unit tests never touch I/O.
+- Acceptance specs that still use the interim mocked minimal-app pattern (not
+  `createApp()`) close the app in `t.after()` — flag as a suggestion to migrate
+  to true e2e, not blocking.
 
 ### Frontend (`app/`)
 

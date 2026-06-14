@@ -36,8 +36,8 @@ This flat layout is the default. A slice may opt in to a deeper
 genuinely warrants it (multiple aggregates, invariants, multi-entity
 workflows) — never for CRUD features. Don't introduce those folders speculatively.
 
-Tests (`<feature>.service.test.ts`, `<feature>.routes.test.ts`,
-`<feature>.repo.test.ts`) are the test-author agent's job — only write them if
+Tests (`<feature>.service.unit.ts`, `<feature>.repo.int.ts`,
+`<feature>.routes.spec.ts`) are the test-author agent's job — only write them if
 explicitly asked.
 
 > Note: `docs/conventions.md` still shows older `-schema.ts` / `-repository.ts`

@@ -23,7 +23,7 @@ just setup   # first time: build image, install deps, start services
 just start   # subsequent starts
 ```
 
-Services must be running for `just test`, `just test-unit`, `just test-acceptance`, and `just typecheck`. All other commands (`just lint`, `just format`, etc.) spin up a temporary container and work without running services.
+Services must be running for `just test`, `just test-unit`, `just test-integration`, `just test-acceptance`, and `just typecheck`. All other commands (`just lint`, `just format`, etc.) spin up a temporary container and work without running services.
 
 ## Commands
 
@@ -39,8 +39,9 @@ just format         # format api + app
 just format-check   # check formatting without writing
 just typecheck      # TypeScript check (api only)
 just test           # run all api tests
-just test-unit      # run unit tests only (service layer)
-just test-acceptance # run acceptance tests only (HTTP layer)
+just test-unit      # unit tests (domain + application, no I/O)
+just test-integration # integration tests (external services / real DB)
+just test-acceptance # acceptance tests (end-to-end API)
 
 just db-push        # push schema to db (dev only, no migration files)
 just db-generate    # generate migration files from schema changes
@@ -250,22 +251,22 @@ Rules:
 
 ## Testing strategy
 
-Unit tests (`just test-unit`):
+Three buckets, named by file suffix:
 
-- **Domain layer** — test pure business logic; no mocks required unless necessary.
-- **Application layer** — test use cases in isolation; mock domain repository interfaces; no Fastify, DB, or infrastructure allowed.
+**Unit — `*.unit.ts` (`just test-unit`)** — domain and application logic in isolation, no I/O.
+- **Domain** (`<feature>.ts`) — pure business logic; no mocks unless necessary.
+- **Application** (`<feature>.service.ts`) — use cases in isolation; mock the domain repository interface. No Fastify, DB, or infrastructure.
 
-Integration / acceptance tests (`just test-acceptance`):
+**Integration — `*.int.ts` (`just test-integration`)** — adapters against real external services: Drizzle repositories (`<feature>.repo.ts`) against a real Postgres, external API clients. Requires running services.
 
-- Fastify routes (HTTP contract).
-- Drizzle repositories.
-- Database interactions.
+**Acceptance — `*.spec.ts` (`just test-acceptance`)** — end-to-end API tests: drive the real app (`createApp()`) over HTTP against a real database, no mocks.
 
-Mocking rule:
+> Migration note: `users.routes.spec.ts` and `organizations.routes.spec.ts` still mock the repository (HTTP-contract only, no DB) and are flagged to become true end-to-end; `health.routes.spec.ts` (boots `createApp()`) is the closest existing example of the target.
 
-- Use simple object mocks.
+Mocking rule (unit):
+
+- Use simple object mocks (`node:test` `mock.fn`); no external mocking frameworks.
 - Mocks must implement domain-defined interfaces only.
-- No external mocking frameworks required.
 
 Forbidden in unit tests: database access, HTTP requests, Fastify plugins, infrastructure implementations.
 

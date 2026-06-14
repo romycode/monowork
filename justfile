@@ -90,15 +90,15 @@ test:
 test-app:
     docker compose exec --user node app pnpm --filter @monowork/app test
 
-# Run unit tests (service layer, no I/O)
+# Run unit tests (domain + application, no I/O) — *.unit.ts
 test-unit:
     docker compose exec --user node api pnpm --filter @monowork/api test:unit
 
-# Run acceptance tests (HTTP layer, mocked repository)
+# Run acceptance tests (end-to-end API) — *.spec.ts
 test-acceptance:
     docker compose exec --user node api pnpm --filter @monowork/api test:acceptance
 
-# Run integration tests (repository layer, requires running services)
+# Run integration tests (external services, requires running services) — *.int.ts
 test-integration:
     docker compose exec --user node api pnpm --filter @monowork/api test:integration
 
