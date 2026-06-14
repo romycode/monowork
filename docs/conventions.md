@@ -57,6 +57,7 @@ api/
 │       ├── <feature>.repo.ts        # Repository implementation (DB adapter)
 │       ├── <feature>.service.ts     # Business logic (inbound port)
 │       ├── <feature>.routes.ts      # HTTP adapter — thin, delegates to service
+│       ├── <feature>.plugin.ts      # Slice composition root — wires repo + service, registers routes
 │       ├── <feature>.service.test.ts # Unit tests — mocks repository, tests service logic
 │       ├── <feature>.routes.test.ts  # Acceptance tests — mocks repository, tests HTTP contract
 │       └── <feature>.test-helpers.ts # Builders + mockRepo (excluded from production build)
@@ -215,7 +216,8 @@ Each feature is a self-contained directory under `src/<feature>/`, flat (one fil
 
 | Layer | File | May depend on |
 |---|---|---|
-| HTTP adapter + composition root | `<feature>.routes.ts` | Service port, Zod, Fastify |
+| Slice composition root | `<feature>.plugin.ts` | repo + service factories, `db`, Fastify |
+| HTTP adapter | `<feature>.routes.ts` | Service port, Zod, Fastify |
 | Service (inbound port) | `<feature>.service.ts` | Repository port, domain types |
 | Repository impl (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain model |
 | DB model | `<feature>.db.ts` | Drizzle table helpers |
@@ -281,7 +283,7 @@ export const itemsRouter: FastifyPluginAsyncZod<Options> = async (fastify, { ser
 - Register with `void app.register(...)`. The `void` prefix prevents floating-promise lint warnings.
 - Pass the service via plugin options: `void app.register(itemsRouter, { service: itemsService(repo) })`
 
-Each slice is its own **composition root**: it builds its repository and service and registers its router — no global DI container. Today this wiring lives centrally in `createApp()` (`app.ts`); the direction is to move it into the slice plugin so `app.ts` only registers slices. Do this for new slices and when you substantially change an existing one.
+Each slice is its own **composition root** — no global DI container. The **`users` slice** is the reference: `users.plugin.ts` builds the repository + service (each wrapped with `traced`) and registers the router, and `app.ts` just calls `void app.register(usersSlice)`. Keep this wiring in `<feature>.plugin.ts`, **not** in `routes.ts`, so the router stays free of infrastructure imports and its tests never pull in `db`. `organizations` still wires centrally in `createApp()` (the older pattern) — migrate it when you next touch it.
 
 ### Service
 

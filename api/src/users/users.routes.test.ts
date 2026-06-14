@@ -1,4 +1,4 @@
-import type { UsersRepository } from '#/users/users.repo'
+import type { UsersRepository } from '#/users/users'
 import { usersRouter } from '#/users/users.routes'
 import { userService } from '#/users/users.service'
 import { buildUser, mockRepo } from '#/users/users.test-helpers'

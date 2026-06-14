@@ -26,7 +26,8 @@ file names — domain model is plain `<feature>.ts`:
 <feature>.db.ts          # Drizzle pgTable definition only
 <feature>.repo.ts        # repository implementation (DB adapter); maps DB record → domain
 <feature>.service.ts     # business logic (inbound port); factory function
-<feature>.routes.ts      # HTTP adapter + slice composition root; Zod schemas live here
+<feature>.routes.ts      # HTTP adapter; Zod schemas live here (no infra imports)
+<feature>.plugin.ts      # slice composition root — wires repo + service, registers routes
 <feature>.test-helpers.ts # builders + mockRepo (excluded from prod build)
 ```
 
@@ -48,6 +49,7 @@ explicitly asked.
 
 | Layer | File | May depend on |
 |---|---|---|
+| Composition root | `<feature>.plugin.ts` | repo + service factories, `db`, Fastify |
 | HTTP adapter | `<feature>.routes.ts` | service port, Zod, Fastify |
 | Service (inbound port) | `<feature>.service.ts` | repository port, domain types |
 | Repository impl (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain |
@@ -108,15 +110,19 @@ Each slice is its own **composition root** — no global DI container. It builds
 its repository over the `db` singleton and its service over the repository, each
 wrapped with `traced(...)` for observability, then registers the router.
 
-Preferred for **new** slices: do this wiring **inside the slice plugin** so
-`api/src/app.ts` only has to register the slice. The existing slices instead
-wire centrally in `createApp()` (`app.ts`); match that only when extending an
-already-central slice. The wiring itself is the same either way:
+Preferred for **new** slices: put this wiring in `<feature>.plugin.ts` (not
+`routes.ts`, so the router stays infra-free and unit-testable) and have
+`api/src/app.ts` just `void app.register(<feature>Slice)`. The **`users` slice**
+is the reference. `organizations` still wires centrally in `createApp()` — match
+that only when extending an already-central slice. The plugin looks like:
 
 ```ts
-const usersRepo = traced(createUsersRepository(db), 'UsersRepository')
-const usersService = traced(userService(usersRepo), 'UsersService')
-void app.register(usersRouter, { usersService })
+// users.plugin.ts
+export const usersSlice: FastifyPluginAsync = async (app) => {
+  const repo = traced(createUsersRepository(db), 'UsersRepository')
+  const usersService = traced(userService(repo), 'UsersService')
+  void app.register(usersRouter, { usersService })
+}
 ```
 
 If the feature adds HTTP endpoints, also add Bruno requests

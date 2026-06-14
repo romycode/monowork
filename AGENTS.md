@@ -83,7 +83,8 @@ api/src/<feature>/
   <feature>.db.ts       # Drizzle table definition
   <feature>.repo.ts     # repository implementation (DB adapter) — maps DB record → domain type
   <feature>.service.ts  # application: business logic / use cases (factory function)
-  <feature>.routes.ts   # infrastructure: Fastify plugin (HTTP adapter + slice composition root)
+  <feature>.routes.ts   # infrastructure: HTTP adapter (Fastify routes) — receives the service via opts
+  <feature>.plugin.ts   # infrastructure: slice composition root — builds repo + service, registers routes
   <feature>.*.test.ts   # unit + acceptance tests
 ```
 
@@ -100,7 +101,7 @@ The layer names used throughout this document (domain / application / infrastruc
 >
 > This is a deliberate, **per-slice** decision — not a repo-wide target, and not for CRUD-shaped features. Most slices should stay flat; don't introduce these folders speculatively.
 
-> **Two refinements we're adopting (while staying flat).** 1) The **repository interface is a domain abstraction**: define it in `<feature>.ts` and implement it in `<feature>.repo.ts`, so the service depends on a domain-owned contract. 2) Each slice is its **own composition root**: the slice plugin builds its repository + service and registers its routes (see *Fastify slice architecture*). The existing slices predate both — today the repository type lives in `<feature>.repo.ts` and wiring is centralised in `api/src/app.ts`. Move a slice toward these when you create it or substantially change it; do **not** refactor everything at once.
+> **Two refinements we're adopting (while staying flat).** 1) The **repository interface is a domain abstraction**: define it in `<feature>.ts` and implement it in `<feature>.repo.ts`, so the service depends on a domain-owned contract. 2) Each slice is its **own composition root**: a `<feature>.plugin.ts` builds its repository + service and registers the router (see *Fastify slice architecture*). The **`users` slice is the reference example** of both — `users.ts` owns the `UsersRepository` interface and `users.plugin.ts` is the composition root that `app.ts` just registers. `organizations` and `health` still use the older pattern (repository type in `<feature>.repo.ts`, wiring centralised in `api/src/app.ts`); migrate a slice toward the `users` shape when you create it or substantially change it — don't refactor everything at once.
 
 ## Core architectural principles
 
@@ -192,7 +193,7 @@ Rules:
 
 ## Fastify slice architecture
 
-Each vertical slice is a **Fastify plugin** that acts as its own **composition root**. In the flat layout this is the slice's `<feature>.routes.ts` (the plugin builds the repo + service and registers routes); an opt-in folder slice may use a dedicated `infrastructure/plugin.ts`.
+Each vertical slice is a **Fastify plugin** that acts as its own **composition root**. In the flat layout this is a dedicated `<feature>.plugin.ts` that builds the repo + service and registers the slice's `<feature>.routes.ts` router; keeping the wiring out of `routes.ts` leaves the router free of infrastructure imports so its acceptance test never pulls in `db` (see the `users` slice). An opt-in folder slice may use `infrastructure/plugin.ts` instead.
 
 Responsibilities of a slice plugin:
 
