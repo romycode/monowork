@@ -214,7 +214,8 @@ Rules:
 
 - Vue 3 Composition API only.
 - Use `<script setup>`.
-- Pinia for shared state only.
+- **Composables (`use*`) are the design pattern for reusable logic.** Extract repeated component logic, side-effect orchestration, watchers, and cross-component behaviour into composables under `app/src/composables/` (one `use<Thing>.ts` per concern). Composables encapsulate *logic*, not application state.
+- Pinia for shared/stateful state only — keep anything stateful in a store, not a composable.
 - Avoid duplicating business logic in components.
 - UI logic stays in the frontend only.
 - Domain logic must never be reimplemented in the frontend.

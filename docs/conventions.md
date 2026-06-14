@@ -74,6 +74,7 @@ app/
 │   ├── main.ts               # Vue app bootstrap
 │   ├── App.vue
 │   ├── router/index.ts
+│   ├── composables/          # reusable logic (use<Thing>.ts)
 │   └── stores/               # Pinia stores
 ├── vite.config.ts
 ├── tsconfig.json             # Project references
@@ -336,7 +337,8 @@ const port = Number(process.env.PORT)
 The frontend uses Vue 3 + Pinia + Vue Router. The stack is configured but mostly scaffolding at this point.
 
 - **Path alias**: `~/` maps to `src/`. Use it for all internal imports.
-- **Stores**: one Pinia store per domain concept, in `src/stores/`. Export the store via a `use<Name>Store` composable using `defineStore`.
+- **Stores**: one Pinia store per domain concept, in `src/stores/`. Export the store via a `use<Name>Store` composable using `defineStore`. Pinia holds shared/stateful state.
+- **Composables**: the design pattern for reusable logic. Extract repeated component logic, side-effect orchestration, watchers, and cross-component behaviour into `use<Thing>.ts` files under `src/composables/` (one concern per file, returning refs/computed/functions). Composables encapsulate logic, not application state — keep stateful shared state in a Pinia store.
 - **Router**: routes are defined in `src/router/index.ts`. Use named routes.
 - **Components**: PascalCase filenames. Single-file components (`.vue`) only.
 - **Styles**: scoped styles (`<style scoped>`) by default.
