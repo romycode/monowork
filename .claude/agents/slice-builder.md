@@ -11,7 +11,10 @@ model: sonnet
 
 You build **API vertical slices** for the `@monowork/api` Fastify 5 backend.
 Read `AGENTS.md` and `docs/conventions.md` before writing code, and mirror the
-existing `api/src/users/` slice as the reference implementation.
+existing `api/src/users/` slice for **naming, style, and conventions**. For new
+slices apply the two refinements those existing slices predate: define the
+repository interface in `<feature>.ts` (domain), and make the slice plugin its
+own composition root (see *Composition root & wiring*).
 
 ## File layout (current naming convention)
 
@@ -19,13 +22,18 @@ A slice lives in `api/src/<feature>/` and owns every layer. Use these exact
 file names — domain model is plain `<feature>.ts`:
 
 ```
-<feature>.ts             # domain types — pure TS, no Drizzle imports
+<feature>.ts             # domain entity types + repository interface — pure TS, no Drizzle
 <feature>.db.ts          # Drizzle pgTable definition only
-<feature>.repo.ts        # DB adapter (outbound port) + repository type; maps DB record → domain
+<feature>.repo.ts        # repository implementation (DB adapter); maps DB record → domain
 <feature>.service.ts     # business logic (inbound port); factory function
-<feature>.routes.ts      # HTTP adapter; Zod schemas live here
+<feature>.routes.ts      # HTTP adapter + slice composition root; Zod schemas live here
 <feature>.test-helpers.ts # builders + mockRepo (excluded from prod build)
 ```
+
+This flat layout is the default. A slice may opt in to a deeper
+`domain/ application/ infrastructure/` folder layout **only** when its domain
+genuinely warrants it (multiple aggregates, invariants, multi-entity
+workflows) — never for CRUD features. Don't introduce those folders speculatively.
 
 Tests (`<feature>.service.test.ts`, `<feature>.routes.test.ts`,
 `<feature>.repo.test.ts`) are the test-author agent's job — only write them if
@@ -42,14 +50,18 @@ explicitly asked.
 |---|---|---|
 | HTTP adapter | `<feature>.routes.ts` | service port, Zod, Fastify |
 | Service (inbound port) | `<feature>.service.ts` | repository port, domain types |
-| DB adapter (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton |
+| Repository impl (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain |
 | Schema | `<feature>.db.ts` | Drizzle table helpers |
-| Domain | `<feature>.ts` | nothing (pure TS) |
+| Domain (entity types + repo interface) | `<feature>.ts` | nothing (pure TS) |
 
 - A router must **never** call a repository directly.
 - The service knows domain types + the repository port only — no HTTP, no Drizzle.
-- The repository is the only layer that knows both the DB record shape and the
-  domain type, and owns the mapping between them.
+- The repository **interface** (the port) belongs in `<feature>.ts` (domain);
+  `<feature>.repo.ts` implements it. The service depends on the interface from
+  the domain file, never on the implementation. (Existing slices still keep the
+  type in `<feature>.repo.ts` — move it to `<feature>.ts` for new slices.)
+- The repository implementation is the only layer that knows both the DB record
+  shape and the domain type, and owns the mapping between them.
 
 ## Hard conventions
 
@@ -90,12 +102,16 @@ module top. Receive the service via a named plugin option keyed by the service
 name; register with `void app.register(<feature>Router, { <feature>Service })`.
 Don't annotate `req`/`reply` — the Zod type provider derives them.
 
-## Wiring
+## Composition root & wiring
 
-After building the slice, wire it in `api/src/app.ts`: build the repository over
-the `db` singleton and the service over the repository, each wrapped with
-`traced(...)` for observability, then register the router. Mirror the existing
-users wiring exactly:
+Each slice is its own **composition root** — no global DI container. It builds
+its repository over the `db` singleton and its service over the repository, each
+wrapped with `traced(...)` for observability, then registers the router.
+
+Preferred for **new** slices: do this wiring **inside the slice plugin** so
+`api/src/app.ts` only has to register the slice. The existing slices instead
+wire centrally in `createApp()` (`app.ts`); match that only when extending an
+already-central slice. The wiring itself is the same either way:
 
 ```ts
 const usersRepo = traced(createUsersRepository(db), 'UsersRepository')

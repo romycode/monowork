@@ -39,7 +39,7 @@ monowork/
 
 ### `api/` layout
 
-Organised as **vertical slices + ports & adapters**. Each feature owns all its layers under a single directory:
+Organised as **vertical slices + ports & adapters**, one file per layer. This flat layout is the **default and standard**; each feature owns all its layers under a single directory:
 
 ```
 api/
@@ -52,9 +52,9 @@ api/
 │   │   ├── index.ts          # Drizzle db singleton and DB type
 │   │   └── seed.ts           # Dev seed script
 │   └── <feature>/
-│       ├── <feature>.ts             # Domain model — pure TS types, no Drizzle imports
+│       ├── <feature>.ts             # Domain — pure TS entity types + repository interface, no Drizzle
 │       ├── <feature>.db.ts          # Drizzle table definition
-│       ├── <feature>.repo.ts        # DB adapter (outbound port)
+│       ├── <feature>.repo.ts        # Repository implementation (DB adapter)
 │       ├── <feature>.service.ts     # Business logic (inbound port)
 │       ├── <feature>.routes.ts      # HTTP adapter — thin, delegates to service
 │       ├── <feature>.service.test.ts # Unit tests — mocks repository, tests service logic
@@ -65,6 +65,8 @@ api/
 ├── tsconfig.build.json       # Excludes tests/seed from production build
 └── package.json
 ```
+
+A slice may **opt in** to a deeper `domain/ application/ infrastructure/` folder layout, but only when its domain logic genuinely warrants it (multiple aggregates, real invariants, multi-entity workflows) — never for CRUD-shaped features. Keep slices flat by default.
 
 ### `app/` layout
 
@@ -209,17 +211,36 @@ The `types` array in each `tsconfig.json` is explicit — TypeScript 6 defaults 
 
 ### Vertical slices + ports & adapters
 
-Each feature is a self-contained directory under `src/<feature>/`. The layers within each slice have strict rules about what they may depend on:
+Each feature is a self-contained directory under `src/<feature>/`, flat (one file per layer) by default. A slice may opt in to a `domain/ application/ infrastructure/` folder layout only when its domain logic genuinely warrants it — not for CRUD features. The layers within each slice have strict rules about what they may depend on:
 
 | Layer | File | May depend on |
 |---|---|---|
-| HTTP adapter | `<feature>.routes.ts` | Service port, Zod, Fastify |
+| HTTP adapter + composition root | `<feature>.routes.ts` | Service port, Zod, Fastify |
 | Service (inbound port) | `<feature>.service.ts` | Repository port, domain types |
-| DB adapter (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain model |
+| Repository impl (outbound port) | `<feature>.repo.ts` | Drizzle, `db` singleton, domain model |
 | DB model | `<feature>.db.ts` | Drizzle table helpers |
-| Domain model | `<feature>.ts` | Pure TS — no Drizzle |
+| Domain (entity types + repository interface) | `<feature>.ts` | Pure TS — no Drizzle |
 
 No layer may skip levels (e.g. a router must not call the repository directly).
+
+### Domain model
+
+`<feature>.ts` is the slice's domain layer: hand-written entity types and the **repository interface** (the port), in pure TypeScript with no Drizzle imports. The service and the repository implementation both depend on this file, and tests mock the interface from here without pulling in infrastructure.
+
+```ts
+// items.ts
+export type Item = {
+  id: string
+  name: string
+}
+
+export type ItemsRepository = {
+  findAll: () => Promise<Item[]>
+  findById: (id: string) => Promise<Item | undefined>
+}
+```
+
+> Existing slices still declare the repository `type` in `<feature>.repo.ts` rather than `<feature>.ts`. That's the current baseline; move the interface into the domain file when you create or substantially change a slice.
 
 ### HTTP method semantics
 
@@ -260,12 +281,14 @@ export const itemsRouter: FastifyPluginAsyncZod<Options> = async (fastify, { ser
 - Register with `void app.register(...)`. The `void` prefix prevents floating-promise lint warnings.
 - Pass the service via plugin options: `void app.register(itemsRouter, { service: itemsService(repo) })`
 
+Each slice is its own **composition root**: it builds its repository and service and registers its router — no global DI container. Today this wiring lives centrally in `createApp()` (`app.ts`); the direction is to move it into the slice plugin so `app.ts` only registers slices. Do this for new slices and when you substantially change an existing one.
+
 ### Service
 
-Contains business logic. Receives domain inputs, returns domain objects, delegates persistence to the repository port. Use a factory function — not a class.
+Contains business logic. Receives domain inputs, returns domain objects, delegates persistence to the repository port. Use a factory function — not a class. Depend on the repository **interface** from the domain file (`#/items/items`), never on the repository implementation.
 
 ```ts
-import type { ItemsRepository, Item } from '#/items/items.repo'
+import type { Item, ItemsRepository } from '#/items/items'
 
 export type ItemsService = {
   list: () => Promise<Item[]>
@@ -282,19 +305,22 @@ export function itemsService(repo: ItemsRepository): ItemsService {
 
 ### Repository
 
-DB adapter. Use a factory function — not a class. Define the repository `type` (the port) in the same file so it can be imported and mocked in tests without pulling in Drizzle.
+Repository **implementation** (DB adapter). Use a factory function — not a class. The repository interface (the port) and the domain entity type live in `<feature>.ts` (see *Domain model*); this file imports them, maps the Drizzle record to the domain type, and is the only layer that knows both shapes.
 
 ```ts
-export type Item = typeof items.$inferSelect
+import type { Item, ItemsRepository } from '#/items/items'
+import { items } from '#/items/items.db'
+import type { DB } from '#/db/index'
 
-export type ItemsRepository = {
-  findAll: () => Promise<Item[]>
-  // ...
+type ItemRecord = typeof items.$inferSelect
+
+function toItem(record: ItemRecord): Item {
+  return { id: record.id, name: record.name }
 }
 
 export function createItemsRepository(db: DB): ItemsRepository {
   return {
-    findAll: () => db.select().from(items),
+    findAll: async () => (await db.select().from(items)).map(toItem),
     // ...
   }
 }

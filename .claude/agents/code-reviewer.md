@@ -30,8 +30,16 @@ Then check the changed files against `AGENTS.md` and `docs/conventions.md`.
 - **File naming** matches the slice convention used in `api/src/users/`:
   `<feature>.ts`, `.db.ts`, `.repo.ts`, `.service.ts`, `.routes.ts`,
   `.test-helpers.ts`, and `*.test.ts` siblings.
-- **Factories not classes** for services and repositories; an exported `type`
-  port defined alongside.
+- **Factories not classes** for services and repositories, each returning an
+  object typed by an exported `type` port.
+- **Repository interface placement.** For new/substantially-changed slices the
+  repository interface should be defined in the domain file `<feature>.ts` and
+  implemented in `<feature>.repo.ts`, with the service depending on the domain
+  interface. Existing slices keeping the type in `<feature>.repo.ts` are the
+  current baseline — flag the placement only as a suggestion, not blocking.
+- **Slices stay flat** (one file per layer) unless a deeper
+  `domain/ application/ infrastructure/` layout is justified by genuine domain
+  complexity. Flag speculative folder-per-layer on CRUD features.
 - **HTTP semantics**: PUT creates/replaces (client-supplied UUID, idempotent),
   PATCH partial (≥1 field), no POST-for-create.
 - **env**: no `process.env` access outside `src/env.ts`.
@@ -57,11 +65,12 @@ Then check the changed files against `AGENTS.md` and `docs/conventions.md`.
 
 - `~/` alias, Pinia store per domain via `use<Name>Store`, named routes,
   PascalCase `.vue` filenames, scoped styles, base components reused.
+- Reusable logic extracted into composables (`use<Thing>.ts` under
+  `composables/`), not duplicated across components. Composables hold logic;
+  stateful shared state stays in a Pinia store.
 
 ### Workflow
 
-- A plan file exists under `docs/plans/` and the task is tracked in
-  `docs/planing.md`.
 - New HTTP endpoints have matching Bruno requests under `bruno/<feature>/`.
 
 ## How to report

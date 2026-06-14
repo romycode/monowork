@@ -75,30 +75,32 @@ packages/   Shared libraries (types, utilities, schemas)
 
 `pnpm-workspace.yaml` declares the packages: `api` (`@monowork/api`), `app` (`@monowork/app`), and the libraries under `packages/` (e.g. `@monowork/tracing`). Shared dev dependencies are pinned once in the workspace `catalog:` and referenced with `catalog:` in individual `package.json` files.
 
-Each feature in `api/` is a self-contained **vertical slice**. The target layout for a slice is layer-per-folder:
+Each feature in `api/src/` is a self-contained **vertical slice** in a **ports & adapters** style, one file per layer. This flat layout is the **default and standard** for the repo — the existing slices (`users`, `organizations`, `health`) all use it, and new slices should too:
 
 ```
-api/users/
-  domain/          # entities, value objects, domain services, repository interfaces
-  application/      # use cases (commands / queries), workflows
-  infrastructure/   # Drizzle repositories, Fastify plugin (composition root), DB access
+api/src/<feature>/
+  <feature>.ts          # domain: entity types + repository interface — pure TS, no ORM imports
+  <feature>.db.ts       # Drizzle table definition
+  <feature>.repo.ts     # repository implementation (DB adapter) — maps DB record → domain type
+  <feature>.service.ts  # application: business logic / use cases (factory function)
+  <feature>.routes.ts   # infrastructure: Fastify plugin (HTTP adapter + slice composition root)
+  <feature>.*.test.ts   # unit + acceptance tests
 ```
 
-> **Migration note — current vs. target.** The existing slices (`users`, `organizations`, `health`) do **not** yet use this folder-per-layer layout. They are written in a flatter *ports & adapters* style with one file per layer inside `api/src/<feature>/`:
+The layer names used throughout this document (domain / application / infrastructure) are **conceptual** — they map onto these files; they are **not** required to be folders. Keep slices flat by default.
+
+> **Opt-in: folder-per-layer for genuinely complex slices.** Only when a slice grows rich domain logic — multiple aggregates, real invariants, value objects, domain services, multi-entity workflows — may it graduate to a deeper layer-per-folder layout:
 >
 > ```
 > api/src/<feature>/
->   <feature>.ts          # domain types — pure TS, no ORM imports
->   <feature>.db.ts       # Drizzle table definition
->   <feature>.repo.ts     # DB adapter — maps DB record → domain type
->   <feature>.service.ts  # business logic (use cases)
->   <feature>.routes.ts   # Fastify plugin (HTTP adapter), receives deps via opts
->   <feature>.*.test.ts   # unit + acceptance tests
+>   domain/          # entities, value objects, domain services, repository interfaces
+>   application/     # use cases (commands / queries), workflows
+>   infrastructure/  # Drizzle repositories, Fastify plugin (composition root), DB access
 > ```
 >
-> Dependencies are already passed into routers via Fastify plugin `opts`, but composition is currently **centralised in `api/src/app.ts`** rather than per-slice, and repository contracts are inferred adapter types rather than explicit domain-layer interfaces.
->
-> The principles and dependency rules below describe the **target** architecture. When you touch a slice, prefer moving it toward the target, but **do not** rewrite an entire slice unless that is the explicit task — keep changes local (see Code change rules). New slices should follow the target layout.
+> This is a deliberate, **per-slice** decision — not a repo-wide target, and not for CRUD-shaped features. Most slices should stay flat; don't introduce these folders speculatively.
+
+> **Two refinements we're adopting (while staying flat).** 1) The **repository interface is a domain abstraction**: define it in `<feature>.ts` and implement it in `<feature>.repo.ts`, so the service depends on a domain-owned contract. 2) Each slice is its **own composition root**: the slice plugin builds its repository + service and registers its routes (see *Fastify slice architecture*). The existing slices predate both — today the repository type lives in `<feature>.repo.ts` and wiring is centralised in `api/src/app.ts`. Move a slice toward these when you create it or substantially change it; do **not** refactor everything at once.
 
 ## Core architectural principles
 
@@ -149,6 +151,8 @@ Repository rule — repositories are domain-level abstractions of aggregates. Th
 - Avoid query-specific or infrastructure-specific methods.
 - Remain framework-agnostic.
 
+In the flat layout the domain layer is `<feature>.ts` — the entity types and the repository **interface** live there; `<feature>.repo.ts` implements that interface. (Existing slices still declare the repository type in `<feature>.repo.ts`; move it into `<feature>.ts` when you next touch the slice.)
+
 ## Application layer
 
 The application layer defines use cases and system behaviour.
@@ -188,7 +192,7 @@ Rules:
 
 ## Fastify slice architecture
 
-Each vertical slice MUST be implemented as a Fastify plugin (target: `api/<feature>/infrastructure/plugin.ts`).
+Each vertical slice is a **Fastify plugin** that acts as its own **composition root**. In the flat layout this is the slice's `<feature>.routes.ts` (the plugin builds the repo + service and registers routes); an opt-in folder slice may use a dedicated `infrastructure/plugin.ts`.
 
 Responsibilities of a slice plugin:
 
