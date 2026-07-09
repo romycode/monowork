@@ -32,85 +32,22 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v2
 
-      - name: Disable telemetry
-        # Turn off telemetry in CI: the api dev server (the container command)
-        # starts the OpenTelemetry SDK and would export to otel-lgtm, which is
-        # never started below. compose.yml does not load an env_file, so inject
-        # OTEL_SDK_DISABLED through a CI-only compose override (auto-merged by
-        # `docker compose`, never committed) to no-op the SDK. The test run
-        # itself doesn't load otel.ts, so this only quiets the dev server.
-        run: |
-          printf 'services:\n  api:\n    environment:\n      OTEL_SDK_DISABLED: "true"\n' > compose.override.yml
-          cat compose.override.yml
-
+      # Every step below drives Docker through a just recipe — CI never calls
+      # docker compose directly. The ci-* recipes wrap the CI-specific compose
+      # invocations (frozen lockfile, telemetry disabled, otel-lgtm skipped).
       - name: Build dev image
         run: just build
 
       - name: Install dependencies
-        # The `development` image ships no node_modules; deps live in the
-        # bind-mounted working tree (compose mounts `.:/monowork`). The
-        # `just install` recipe uses `docker compose run -it`, whose TTY
-        # request fails on the runner, so install directly instead. Runs as
-        # root (the image default) so it can write into the checkout, which
-        # is owned by a different uid than the container's `node` user.
-        #
-        # Clear NODE_OPTIONS for this step: compose sets it to preload
-        # `--import @opentelemetry/instrumentation/hook.mjs`, but that package
-        # isn't installed yet — with node_modules still empty, node would fail
-        # to resolve the import before pnpm can install it. Every later node
-        # process runs after install, when the package resolves normally.
-        run: docker compose run --rm --no-deps -e NODE_OPTIONS= api pnpm install --frozen-lockfile
+        run: just ci-install
 
       - name: Start services
-        # Telemetry is disabled in CI: start only the services the test run
-        # needs and skip the otel-lgtm observability stack. --no-deps stops
-        # compose from pulling otel-lgtm in via the api service's depends_on —
-        # but it also drops the wait on postgres's healthcheck, so the next
-        # step polls postgres explicitly before anything talks to it.
-        run: docker compose up -d --no-deps postgres api app
+        run: just ci-up
 
       - name: Wait for services
-        # typecheck/db-push/tests exec into the api/app containers and reach
-        # postgres over the network. Poll until the containers accept `exec`
-        # and postgres reports ready, before driving any of them.
-        run: |
-          for svc in api app; do
-            ok=
-            for i in $(seq 1 30); do
-              if docker compose exec -T "$svc" true 2>/dev/null; then
-                echo "$svc is ready"
-                ok=1
-                break
-              fi
-              echo "waiting for $svc... ($i)"
-              sleep 2
-            done
-            if [ -z "$ok" ]; then
-              echo "$svc did not become ready in time"
-              docker compose logs "$svc"
-              exit 1
-            fi
-          done
-          ok=
-          for i in $(seq 1 30); do
-            if docker compose exec -T postgres pg_isready -U monowork >/dev/null 2>&1; then
-              echo "postgres is ready"
-              ok=1
-              break
-            fi
-            echo "waiting for postgres... ($i)"
-            sleep 2
-          done
-          if [ -z "$ok" ]; then
-            echo "postgres did not become ready in time"
-            docker compose logs postgres
-            exit 1
-          fi
+        run: just ci-wait
 
       - name: Push database schema
-        # The integration suite (users.repo.test.ts) runs against the compose
-        # postgres service via DATABASE_URL — not Testcontainers — so the
-        # schema must exist before `just test` runs.
         run: just db-push
 
       - name: Lint

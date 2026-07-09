@@ -102,6 +102,57 @@ test-acceptance:
 test-integration:
     docker compose exec --user node api pnpm --filter @monowork/api test:integration
 
+# ── CI ────────────────────────────────────────────────────────────────────────
+# Recipes used by .github/workflows/ci.yml so the workflow drives everything
+# through just, never docker compose directly. They differ from the local
+# service recipes above in three CI-specific ways: a frozen lockfile, telemetry
+# disabled, and the otel-lgtm observability stack left down.
+
+# Install workspace deps for CI (frozen lockfile).
+# Clears NODE_OPTIONS because compose sets it to preload the OTel hook
+# (--import @opentelemetry/instrumentation/hook.mjs) — which isn't installed
+# yet, so node would fail to resolve that import before pnpm can install it.
+# Runs as root (image default) to write into the runner-owned checkout.
+ci-install:
+    docker compose run --rm --no-deps -e NODE_OPTIONS= api pnpm install --frozen-lockfile
+
+# Start only the services the test run needs, with telemetry disabled.
+# Writes a gitignored compose.override.yml that sets OTEL_SDK_DISABLED on the
+# api dev server (compose.yml declares no env_file, so this is how the var is
+# injected); compose auto-merges the override into every later recipe too.
+# --no-deps skips otel-lgtm, which the api service otherwise pulls in.
+ci-up:
+    printf 'services:\n  api:\n    environment:\n      OTEL_SDK_DISABLED: "true"\n' > compose.override.yml
+    docker compose up -d --no-deps postgres api app
+
+# Wait until api/app accept exec and postgres is ready, before driving them.
+# --no-deps (in ci-up) skips the depends_on healthcheck wait, so poll here.
+ci-wait:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for svc in api app; do
+      ok=
+      for i in $(seq 1 30); do
+        if docker compose exec -T "$svc" true 2>/dev/null; then
+          echo "$svc is ready"; ok=1; break
+        fi
+        echo "waiting for $svc... ($i)"; sleep 2
+      done
+      if [ -z "$ok" ]; then
+        echo "$svc did not become ready in time"; docker compose logs "$svc"; exit 1
+      fi
+    done
+    ok=
+    for i in $(seq 1 30); do
+      if docker compose exec -T postgres pg_isready -U monowork >/dev/null 2>&1; then
+        echo "postgres is ready"; ok=1; break
+      fi
+      echo "waiting for postgres... ($i)"; sleep 2
+    done
+    if [ -z "$ok" ]; then
+      echo "postgres did not become ready in time"; docker compose logs postgres; exit 1
+    fi
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 # Push schema to the running database (no migration files)
