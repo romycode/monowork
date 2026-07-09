@@ -60,7 +60,7 @@ jobs:
         run: just typecheck
 
       - name: Test
-        run: just test
+        run: just ci-test
 
       - name: Stop services
         if: always()

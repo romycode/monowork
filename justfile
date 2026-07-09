@@ -163,6 +163,15 @@ ci-wait:
 ci-build-api:
     docker compose exec api pnpm --filter @monowork/api build
 
+# Run the api + app suites for CI. Runs as root (not the node user the local
+# `test` recipe uses) because ci-install populates node_modules as root, and
+# vitest writes a bundled config into app/node_modules/.vite-temp — the node
+# user can't write into root-owned node_modules. The api suite (node:test)
+# only reads, so root is harmless there.
+ci-test:
+    docker compose exec api pnpm --filter @monowork/api test
+    docker compose exec app pnpm --filter @monowork/app test
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 # Push schema to the running database (no migration files)
