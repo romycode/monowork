@@ -153,6 +153,14 @@ ci-wait:
       echo "postgres did not become ready in time"; docker compose logs postgres; exit 1
     fi
 
+# Compile the api so db-push can resolve #/env. drizzle-kit resolves the `#/`
+# subpath via package.json "imports" (#/* → ./dist/src/*.js), not the tsconfig
+# paths mapping (which it reports as unsupported), so drizzle.config.ts's
+# `import { env } from "#/env"` needs dist/ to exist. A fresh checkout has no
+# dist/, so build it before db-push.
+ci-build-api:
+    docker compose exec --user node api pnpm --filter @monowork/api build
+
 # ── Database ──────────────────────────────────────────────────────────────────
 
 # Push schema to the running database (no migration files)
