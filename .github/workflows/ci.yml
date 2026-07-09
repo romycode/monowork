@@ -53,7 +53,13 @@ jobs:
         # request fails on the runner, so install directly instead. Runs as
         # root (the image default) so it can write into the checkout, which
         # is owned by a different uid than the container's `node` user.
-        run: docker compose run --rm --no-deps api pnpm install --frozen-lockfile
+        #
+        # Clear NODE_OPTIONS for this step: compose sets it to preload
+        # `--import @opentelemetry/instrumentation/hook.mjs`, but that package
+        # isn't installed yet — with node_modules still empty, node would fail
+        # to resolve the import before pnpm can install it. Every later node
+        # process runs after install, when the package resolves normally.
+        run: docker compose run --rm --no-deps -e NODE_OPTIONS= api pnpm install --frozen-lockfile
 
       - name: Start services
         # Telemetry is disabled in CI: start only the services the test run
