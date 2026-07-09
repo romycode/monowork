@@ -157,9 +157,11 @@ ci-wait:
 # subpath via package.json "imports" (#/* → ./dist/src/*.js), not the tsconfig
 # paths mapping (which it reports as unsupported), so drizzle.config.ts's
 # `import { env } from "#/env"` needs dist/ to exist. A fresh checkout has no
-# dist/, so build it before db-push.
+# dist/, so build it before db-push. Runs as root (image default, not the node
+# user the other exec recipes use) because writing dist/ into the runner-owned
+# bind mount needs root; the emitted files stay world-readable for db-push.
 ci-build-api:
-    docker compose exec --user node api pnpm --filter @monowork/api build
+    docker compose exec api pnpm --filter @monowork/api build
 
 # ── Database ──────────────────────────────────────────────────────────────────
 
