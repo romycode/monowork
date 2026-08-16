@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref to save runner time.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, typecheck & test (just + Docker)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        # Official Docker action — sets up Buildx for `docker compose build`.
+        # Pin the `docker` driver (not the default `docker-container`): it
+        # builds straight into the local image store, so the image is present
+        # for the later `docker compose up`. The `docker-container` driver
+        # keeps the result in the build cache only, leaving `up` with no image.
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      # Every step below drives Docker through a just recipe — CI never calls
+      # docker compose directly. The ci-* recipes wrap the CI-specific compose
+      # invocations (frozen lockfile, telemetry disabled, otel-lgtm skipped).
+      - name: Build dev image
+        run: just build
+
+      - name: Install dependencies
+        run: just ci-install
+
+      - name: Start services
+        run: just ci-up
+
+      - name: Wait for services
+        run: just ci-wait
+
+      - name: Build api (needed for db-push to resolve #/env)
+        run: just ci-build-api
+
+      - name: Push database schema
+        run: just db-push
+
+      - name: Lint
+        run: just lint
+
+      - name: Typecheck
+        run: just typecheck
+
+      - name: Test
+        run: just ci-test
+
+      - name: Stop services
+        if: always()
+        run: just stop

@@ -4,3 +4,6 @@ node_modules/
 .pnpm-store
 *.js.map
 .env.local
+
+# CI generates this to disable telemetry; never committed
+compose.override.yml

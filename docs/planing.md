@@ -32,6 +32,7 @@ Tracking document for test coverage work across the monorepo. Each task has a de
 | Base UI components + centralized CSS | [base-ui-components.md](plans/base-ui-components.md) | 2026-05-30 | 2026-05-30 |
 | Docker image optimization (follow pnpm guide) | [docker-image-optimization.md](plans/docker-image-optimization.md) | 2026-05-30 | 2026-05-30 |
 | Fix OTel traces missing in Grafana + trace_id absent from Loki logs | [fix-otel-traces-loki-traceid.md](plans/fix-otel-traces-loki-traceid.md) | 2026-05-31 | 2026-05-31 |
+| Add GitHub Actions CI workflow | [github-actions-ci.md](plans/github-actions-ci.md) | 2026-05-27 | 2026-05-31 |
 
 ## Pending
 
@@ -73,7 +74,6 @@ Build org-scoped first (phases 1–5); the staff layer (6–7) layers on top.
 
 | Task | Plan | Added | Completed |
 |------|------|-------|-----------|
-| Add GitHub Actions CI workflow | [github-actions-ci.md](plans/github-actions-ci.md) | 2026-05-27 | |
 | Configure coverage reporting | [coverage-reporting.md](plans/coverage-reporting.md) | 2026-05-27 | |
 | Add coverage thresholds to CI | [coverage-thresholds-ci.md](plans/coverage-thresholds-ci.md) | 2026-05-27 | |
 | Expand pre-commit hook to include acceptance tests | [expand-pre-commit-hook.md](plans/expand-pre-commit-hook.md) | 2026-05-27 | |
